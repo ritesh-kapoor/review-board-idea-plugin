@@ -1,0 +1,95 @@
+<!--
+  ~ Copyright 2015 Ritesh Kapoor
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<idea-plugin version="2">
+    <id>com.ritesh.intellij.plugin.reviewboard</id>
+    <name>Review board</name>
+    <version>0.1.2-beta</version>
+    <vendor email="riteshkapoor.opensource@gmail.com" logo="/reviewBoardLogo.png"
+            url="https://github.com/ritesh-kapoor/review-board-idea-plugin">
+        Ritesh Kapoor
+    </vendor>
+
+    <description><![CDATA[
+        <p>Review Board Code Review Tool</p>
+        <p>Only <strong>Reviewboard 2.0.5 or newer</strong> is supported</p>
+        <p>Features:
+            <ul>
+                <li>Do reviews directly from your IDE</li>
+                <li>View all, pending or submitted reviews</li>
+                <li>Compare (Diff) changes in review locally</li>
+                <li>Submit changes to the reviewboard server</li>
+                <li>Comment on reviews
+                    <br/>Usage: Add new comments in file diff window with click on line;</li>
+                <li>Submit/Discard Reviews</li>
+            </ul>
+        </p>
+        <p>Limitations:
+            <ul>
+                <li>Only git is supported as of now</li>
+                <li>Viewing multiple reviews is not supported</li>
+                <li>Updating diff is not supported</li>
+            </ul>
+        </p>
+        <p>If you find any issues, please report them (please use the <a href="https://github.com/ritesh-kapoor/review-board-idea-plugin/issues">GitHub issue tracker</a> instead of review comments).</p>
+        <p>If you like this plugin, you can support it by writing review and voting for it on IntelliJ plugin repository</a>
+
+        </p>
+    ]]></description>
+
+    <change-notes><![CDATA[
+
+    ]]>
+    </change-notes>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="131"/>
+    <depends>Git4Idea</depends>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Review Board" anchor="bottom" icon="/reviewBoardLogo.png"
+                    factoryClass="com.ritesh.idea.plugin.ui.toolswindow.ReviewBoardToolsWindow"/>
+        <projectService serviceImplementation="com.ritesh.idea.plugin.state.ConfigurationPersistance"
+                        serviceInterface="com.ritesh.idea.plugin.state.ConfigurationPersistance"/>
+        <projectService serviceImplementation="com.ritesh.idea.plugin.state.DefaultStatePersistance"
+                        serviceInterface="com.ritesh.idea.plugin.state.DefaultStatePersistance"/>
+        <projectConfigurable instance="com.ritesh.idea.plugin.state.SettingsPage"/>
+    </extensions>
+
+    <application-components>
+        <!-- Add your application components here -->
+    </application-components>
+
+    <project-components>
+        <!-- Add your project components here -->
+    </project-components>
+
+    <actions>
+        <action id="ReviewBoard.PublishReview" class="com.ritesh.idea.plugin.ui.action.ShowReviewBoard"
+                text="Publish Review" icon="/reviewBoardLogo.png"
+                description="Publish change to review board">
+            <add-to-group group-id="VersionControlsGroup" anchor="first"/>
+            <add-to-group group-id="Vcs.Log.ContextMenu" anchor="first"/>
+        </action>
+    </actions>
+
+</idea-plugin>
