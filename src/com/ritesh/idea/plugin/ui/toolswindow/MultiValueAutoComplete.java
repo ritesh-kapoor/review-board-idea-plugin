@@ -18,8 +18,11 @@ package com.ritesh.idea.plugin.ui.toolswindow;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.EditorCustomization;
@@ -27,8 +30,10 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.intellij.util.TextFieldCompletionProvider;
+import org.apache.commons.lang.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,6 +41,8 @@ import java.util.List;
  * @author ritesh on 24/7/15.
  */
 public class MultiValueAutoComplete {
+    final static Logger LOG = Logger.getInstance(MultiValueAutoComplete.class);
+
     private static final char[] SEPARATORS = {','};
 
     public static EditorTextField create(Project project, DataProvider dataProvider) {
@@ -78,11 +85,29 @@ public class MultiValueAutoComplete {
         }
 
         @Override
-        protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix,
+        protected void addCompletionVariants(@NotNull String text, int offset, @NotNull final String prefix,
                                              @NotNull CompletionResultSet result) {
 
+            final List<String> values = new ArrayList<>();
+            final MutableBoolean completed = new MutableBoolean(false);
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                @Override
+                public void run() {
+                    values.addAll(dataProvider.getValues(prefix));
+                    completed.setValue(true);
+                }
+            });
+
+            while (!completed.booleanValue()) {
+                ProgressManager.getInstance().checkCanceled();
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    LOG.error(e);
+                }
+            }
+
             result.addLookupAdvertisement("Select one or more users separated with comma, | or new lines");
-            List<String> values = dataProvider.getValues(prefix);
             for (String completionVariant : values) {
                 final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
                 result.addElement(element.withLookupString(completionVariant.toLowerCase()));

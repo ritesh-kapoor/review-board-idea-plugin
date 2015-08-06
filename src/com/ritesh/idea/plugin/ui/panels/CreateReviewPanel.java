@@ -16,11 +16,16 @@
 
 package com.ritesh.idea.plugin.ui.panels;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.EditorTextFieldProvider;
+import com.intellij.ui.SoftWrapsEditorCustomization;
 import com.ritesh.idea.plugin.reviewboard.Repository;
 import com.ritesh.idea.plugin.reviewboard.ReviewDataProvider;
 import com.ritesh.idea.plugin.reviewboard.model.RBGroupList;
@@ -33,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -41,8 +47,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class CreateReviewPanel extends DialogWrapper {
     private JPanel panel;
-    private JTextArea description;
-    private JBTextField summary;
+    private EditorTextField description;
+    private EditorTextField summary;
     private EditorTextField targetGroup;
     private EditorTextField targetPeople;
     private ComboBox repository;
@@ -137,6 +143,12 @@ public class CreateReviewPanel extends DialogWrapper {
     }
 
     private void createUIComponents() {
+        List<EditorCustomization> editorCustomizations =
+                Arrays.<EditorCustomization>asList(SoftWrapsEditorCustomization.ENABLED, SpellCheckingEditorCustomization.DISABLED);
+        summary = ServiceManager.getService(project, EditorTextFieldProvider.class)
+                .getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorCustomizations);
+        description = ServiceManager.getService(project, EditorTextFieldProvider.class)
+                .getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorCustomizations);
         targetPeople = MultiValueAutoComplete.create(
                 project, new MultiValueAutoComplete.DataProvider() {
                     @Override
