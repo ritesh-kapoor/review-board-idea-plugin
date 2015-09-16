@@ -227,26 +227,28 @@ public class ReviewsPanel extends JPanel {
         }
         if (newComments.size() > 0) {
             final String reviewComment = Messages.showInputDialog(project, "Review Comment", "Review Comment", null);
-            ProgressManager.getInstance().run(new Task.Backgroundable(project, "Creating Review") {
-                @Override
-                public void run(@NotNull final ProgressIndicator progressIndicator) {
-                    try {
-                        ReviewDataProvider.getInstance(project).createReview(selectedReview, newComments, reviewComment,
-                                new ReviewDataProvider.Progress() {
-                                    @Override
-                                    public void progress(String text, float percentage) {
-                                        progressIndicator.setFraction(percentage);
-                                        progressIndicator.setText(text);
-                                    }
-                                });
+            if (reviewComment != null) {
+                ProgressManager.getInstance().run(new Task.Backgroundable(project, "Creating Review") {
+                    @Override
+                    public void run(@NotNull final ProgressIndicator progressIndicator) {
+                        try {
+                            ReviewDataProvider.getInstance(project).createReview(selectedReview, newComments, reviewComment,
+                                    new ReviewDataProvider.Progress() {
+                                        @Override
+                                        public void progress(String text, float percentage) {
+                                            progressIndicator.setFraction(percentage);
+                                            progressIndicator.setText(text);
+                                        }
+                                    });
 
-                        clearReview();
-                        loadSelectedReview();
-                    } catch (Exception e) {
-                        ErrorManager.showMessage(e);
+                            clearReview();
+                            loadSelectedReview();
+                        } catch (Exception e) {
+                            ErrorManager.showMessage(e);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
