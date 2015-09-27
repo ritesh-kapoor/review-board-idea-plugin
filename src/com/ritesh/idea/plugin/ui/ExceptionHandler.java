@@ -19,22 +19,23 @@ package com.ritesh.idea.plugin.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.ritesh.idea.plugin.util.exception.InvalidConfigurationException;
-import com.ritesh.idea.plugin.util.exception.InvalidCredentialException;
-import com.ritesh.idea.plugin.util.exception.ServerConnectionFailureException;
-import org.apache.http.client.ClientProtocolException;
+import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
+import com.ritesh.idea.plugin.exception.InvalidCredentialException;
+import com.ritesh.idea.plugin.exception.ReviewBoardServerException;
+import com.ritesh.idea.plugin.messages.PluginBundle;
 
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 import static org.apache.commons.lang.StringUtils.defaultString;
 
 /**
  * @author ritesh
  */
-public class ErrorManager {
-    private static final Logger LOG = Logger.getInstance(ErrorManager.class);
+public class ExceptionHandler {
+    private static final Logger LOG = Logger.getInstance(ExceptionHandler.class);
 
     public static class Message {
         public String message;
@@ -45,7 +46,7 @@ public class ErrorManager {
             this.type = type;
         }
 
-        public static enum Type {
+        public enum Type {
             ERROR, WARNING
         }
     }
@@ -54,20 +55,27 @@ public class ErrorManager {
         if (exception instanceof InvalidCredentialException || exception instanceof InvalidConfigurationException) {
             LOG.warn(exception.getMessage());
             return new Message(defaultString(exception.getMessage()), Message.Type.WARNING);
-        } else if (exception instanceof ServerConnectionFailureException || exception instanceof SocketException
-                || exception instanceof UnknownHostException || exception instanceof ClientProtocolException) {
+        } else if (exception instanceof ReviewBoardServerException) {
             LOG.warn(exception.getMessage());
-            return new Message("Unable to connect to server", Message.Type.WARNING);
+            return new Message(exception.getMessage(), Message.Type.WARNING);
+        } else if (exception instanceof URISyntaxException || exception instanceof IOException) {
+            LOG.warn(exception.getMessage());
+            return new Message(PluginBundle.message(PluginBundle.CONNECTION_ERROR_MSG), Message.Type.WARNING);
         } else {
             LOG.error(exception);
             return new Message(defaultString(exception.getMessage()), Message.Type.ERROR);
         }
+
     }
 
-    public static void showMessage(Exception exception) {
-        Message message = getMessage(exception);
-        Notifications.Bus.notify(new Notification("ReviewBoard", "Message from Reviewboard server", message.message,
-                message.type == Message.Type.ERROR ? NotificationType.ERROR : NotificationType.WARNING));
-
+    public static void handleException(Exception exception) {
+        final Message message = getMessage(exception);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                Notifications.Bus.notify(new Notification("ReviewBoard", PluginBundle.message(PluginBundle.NOTIFICATION_TITLE),
+                        message.message, message.type == Message.Type.ERROR ? NotificationType.ERROR : NotificationType.WARNING));
+            }
+        });
     }
 }

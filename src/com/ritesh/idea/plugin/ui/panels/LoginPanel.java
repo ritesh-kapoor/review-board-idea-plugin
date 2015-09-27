@@ -22,15 +22,14 @@ import java.awt.event.ActionListener;
 /**
  * @author Ritesh
  */
-public class LoginForm {
+public class LoginPanel {
     private JPanel panel;
     private JTextField url;
     private JPasswordField password;
     private JTextField username;
     private JButton testConnection;
-    private JLabel message;
 
-    public LoginForm() {
+    public LoginPanel() {
     }
 
     public void addActionListener(ActionListener l) {
@@ -63,9 +62,5 @@ public class LoginForm {
 
     public void setPassword(String password) {
         this.password.setText(password);
-    }
-
-    public void setMessage(String message) {
-        this.message.setText(message);
     }
 }

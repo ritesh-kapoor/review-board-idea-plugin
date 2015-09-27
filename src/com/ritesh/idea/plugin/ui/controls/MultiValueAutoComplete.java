@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ritesh.idea.plugin.ui.toolswindow;
+package com.ritesh.idea.plugin.ui.controls;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;

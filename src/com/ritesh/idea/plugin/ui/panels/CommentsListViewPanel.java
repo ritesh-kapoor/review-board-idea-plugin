@@ -21,29 +21,41 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.ritesh.idea.plugin.reviewboard.Review;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.EventListener;
-import java.util.EventObject;
 import java.util.List;
 
 /**
  * @author Ritesh
  */
-public class CommentsListViewPanel extends JPanel {
-    private JBList commentList = new JBList();
-    private EditorTextField commentEditor = new EditorTextField();
-    private List<Review.File.Comment> comments;
-    private DeleteEventListener onDelete;
+public class CommentsListViewPanel<T> extends JPanel {
+    private final JBList commentList = new JBList();
+    private final EditorTextField commentEditor = new EditorTextField();
+    private final ListCellRenderer listCellRenderer;
+
+    private CommentListener listener;
+
+    @SuppressWarnings("unchecked")
+    public CommentsListViewPanel(List<T> list, ListCellRenderer listCellRenderer) {
+        this.listCellRenderer = listCellRenderer;
+        DefaultListModel listModel = new DefaultListModel();
+        if (list != null) {
+            for (T t : list) {
+                listModel.addElement(t);
+            }
+        }
+        commentList.setModel(listModel);
+        initUI();
+    }
+
+    public void setListener(CommentListener<T> listener) {
+        this.listener = listener;
+    }
 
     private void initUI() {
-
         final JBScrollPane scrollPane = new JBScrollPane(commentList);
         Splitter splitter = new Splitter(true);
         splitter.setProportion(0.7f);
@@ -52,21 +64,21 @@ public class CommentsListViewPanel extends JPanel {
 
         commentEditor.setOneLineMode(false);
         commentList.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
+        commentList.setCellRenderer(listCellRenderer);
         commentList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2 && commentList.getSelectedIndex() > -1
-                        && commentList.getSelectedIndex() < comments.size()
-                        && comments.get(commentList.getSelectedIndex()).id == null) {
-                    commentList.remove(commentList.getSelectedIndex());
-                    onDelete.onDelete(new DeleteEvent(e.getSource(), comments.get(commentList.getSelectedIndex())));
+                if (e.getClickCount() == 2 && commentList.getSelectedIndex() > -1) {
+                    listener.onDelete(commentList.getModel().getElementAt(commentList.getSelectedIndex()));
                 }
             }
         });
-        commentList.setCellRenderer(new ListCellRenderer<Review.File.Comment>() {
+        commentEditor.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).
+                put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK), "postComment");
+        commentEditor.getActionMap().put("postComment", new AbstractAction() {
             @Override
-            public Component getListCellRendererComponent(JList list, final Review.File.Comment value, final int index, boolean isSelected, boolean cellHasFocus) {
-                return new CommentPanel(value.user, value.text, value.timestamp).getPanel();
+            public void actionPerformed(ActionEvent e) {
+                CommentsListViewPanel.this.listener.onAdd(commentEditor.getText());
             }
         });
 
@@ -75,49 +87,9 @@ public class CommentsListViewPanel extends JPanel {
         add(splitter);
     }
 
-    public void addListener(Action action) {
-        commentEditor.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).
-                put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK), "postComment");
-        commentEditor.getActionMap().put("postComment", action);
+    public interface CommentListener<T> extends EventListener {
+        void onAdd(String value);
+
+        void onDelete(T value);
     }
-
-    public void addOnDeleteListener(DeleteEventListener onDelete) {
-        this.onDelete = onDelete;
-    }
-
-    public interface DeleteEventListener extends EventListener {
-        void onDelete(DeleteEvent event);
-    }
-
-    public class DeleteEvent extends EventObject {
-        private final Review.File.Comment comment;
-
-        public DeleteEvent(Object source, Review.File.Comment comment) {
-            super(source);
-            this.comment = comment;
-        }
-
-        public Review.File.Comment getComment() {
-            return comment;
-        }
-    }
-
-    public String getComment() {
-        return commentEditor.getText();
-    }
-
-    @SuppressWarnings("unchecked")
-    public CommentsListViewPanel(final List<Review.File.Comment> comments) {
-        this.comments = comments;
-        initUI();
-
-        DefaultListModel<Review.File.Comment> model = new DefaultListModel<>();
-        if (comments != null) {
-            for (Review.File.Comment comment : comments) {
-                model.addElement(comment);
-            }
-        }
-        commentList.setModel(model);
-    }
-
 }

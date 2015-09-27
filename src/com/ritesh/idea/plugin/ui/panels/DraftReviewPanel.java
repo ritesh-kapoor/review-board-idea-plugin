@@ -18,6 +18,7 @@ package com.ritesh.idea.plugin.ui.panels;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,9 +31,10 @@ import com.ritesh.idea.plugin.reviewboard.Repository;
 import com.ritesh.idea.plugin.reviewboard.ReviewDataProvider;
 import com.ritesh.idea.plugin.reviewboard.model.RBGroupList;
 import com.ritesh.idea.plugin.reviewboard.model.RBUserList;
-import com.ritesh.idea.plugin.ui.ErrorManager;
-import com.ritesh.idea.plugin.ui.toolswindow.MultiValueAutoComplete;
-import com.ritesh.idea.plugin.util.ui.AutoCompletion;
+import com.ritesh.idea.plugin.ui.ExceptionHandler;
+import com.ritesh.idea.plugin.ui.TaskUtil;
+import com.ritesh.idea.plugin.ui.controls.MultiValueAutoComplete;
+import com.ritesh.idea.plugin.util.ThrowableFunction;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,58 +42,50 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Ritesh
  */
-public class CreateReviewPanel extends DialogWrapper {
+public class DraftReviewPanel extends DialogWrapper {
     private JPanel panel;
-    private EditorTextField description;
-    private EditorTextField summary;
-    private EditorTextField targetGroup;
-    private EditorTextField targetPeople;
-    private ComboBox repository;
-    private static final List<Repository> repositories = new CopyOnWriteArrayList<>();
+    private EditorTextField descriptionTextBox;
+    private EditorTextField summaryTextBox;
+    private EditorTextField targetGroupTextBox;
+    private EditorTextField targetPeopleTextBox;
+    private ComboBox repositoryComboBox;
     private Project project;
 
-
-    private static void loadRepositories(final Project project, final CreateReviewPanel createReviewPanel) {
-        createReviewPanel.setOKActionEnabled(false);
-        try {
-            repositories.clear();
-            repositories.addAll(ReviewDataProvider.getInstance(project).repositories());
-            for (Repository r : repositories) {
-                createReviewPanel.repository.addItem(r.name);
-            }
-            createReviewPanel.setOKActionEnabled(true);
-        } catch (Exception e) {
-            ErrorManager.showMessage(e);
-        }
-    }
+    private List<Repository> repositories;
 
     @SuppressWarnings("unchecked")
-    public CreateReviewPanel(Project project, String summary, String description, String targetPeople, String targetGroup, String selectedRepository) {
+    public DraftReviewPanel(final Project project, String dialogTitle,
+                            String summary, String description, String targetPeople, String targetGroup,
+                            final String repository) {
         super(project);
         this.project = project;
 
-        if (repositories.isEmpty()) {
-            loadRepositories(project, this);
-        }
-
-        this.summary.setText(summary);
-        this.description.setText(description);
-        this.targetPeople.setText(targetPeople);
-        this.targetGroup.setText(targetGroup);
-        AutoCompletion.enable(this.repository);
-        for (Repository r : repositories) {
-            this.repository.addItem(r.name);
-        }
-        this.repository.setSelectedItem(selectedRepository);
-        AutoCompletion.enable(this.repository);
+        this.summaryTextBox.setText(summary);
+        this.descriptionTextBox.setText(description);
+        this.targetPeopleTextBox.setText(targetPeople);
+        this.targetGroupTextBox.setText(targetGroup);
 
         super.init();
-        setTitle("New Review");
+        setTitle(dialogTitle);
+        setOKActionEnabled(false);
+
+        TaskUtil.queueTask(project, "Loading Repositories", true, new ThrowableFunction<ProgressIndicator, Void>() {
+            @Override
+            public Void throwableCall(ProgressIndicator params) throws Exception {
+                params.setIndeterminate(true);
+                repositories = ReviewDataProvider.getInstance(project).repositories();
+                for (Repository r : repositories) {
+                    DraftReviewPanel.this.repositoryComboBox.addItem(r.name);
+                }
+                DraftReviewPanel.this.repositoryComboBox.setSelectedItem(repository);
+                DraftReviewPanel.this.setOKActionEnabled(true);
+                return null;
+            }
+        }, null, null);
     }
 
 
@@ -102,23 +96,23 @@ public class CreateReviewPanel extends DialogWrapper {
     }
 
     public String getDescription() {
-        return description.getText();
+        return descriptionTextBox.getText();
     }
 
     public String getSummary() {
-        return summary.getText();
+        return summaryTextBox.getText();
     }
 
     public String getTargetGroup() {
-        return targetGroup.getText().trim();
+        return targetGroupTextBox.getText().trim();
     }
 
     public String getTargetPeople() {
-        return clean(targetPeople.getText());
+        return clean(targetPeopleTextBox.getText());
     }
 
     public String getRepository() {
-        return (String) repository.getSelectedItem();
+        return (String) repositoryComboBox.getSelectedItem();
     }
 
     public String getRepositoryId() {
@@ -131,7 +125,7 @@ public class CreateReviewPanel extends DialogWrapper {
         return null;
     }
 
-    public String clean(String string) {
+    private String clean(String string) {
         String[] split = string.split(",");
         List<String> list = new ArrayList<>();
         for (String s : split) {
@@ -145,11 +139,11 @@ public class CreateReviewPanel extends DialogWrapper {
     private void createUIComponents() {
         List<EditorCustomization> editorCustomizations =
                 Arrays.<EditorCustomization>asList(SoftWrapsEditorCustomization.ENABLED, SpellCheckingEditorCustomization.DISABLED);
-        summary = ServiceManager.getService(project, EditorTextFieldProvider.class)
+        summaryTextBox = ServiceManager.getService(project, EditorTextFieldProvider.class)
                 .getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorCustomizations);
-        description = ServiceManager.getService(project, EditorTextFieldProvider.class)
+        descriptionTextBox = ServiceManager.getService(project, EditorTextFieldProvider.class)
                 .getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorCustomizations);
-        targetPeople = MultiValueAutoComplete.create(
+        targetPeopleTextBox = MultiValueAutoComplete.create(
                 project, new MultiValueAutoComplete.DataProvider() {
                     @Override
                     public List<String> getValues(String prefix) {
@@ -161,14 +155,14 @@ public class CreateReviewPanel extends DialogWrapper {
                             }
                             return userNames;
                         } catch (Exception e) {
-                            ErrorManager.showMessage(e);
+                            ExceptionHandler.handleException(e);
                         }
                         return null;
                     }
                 }
         );
 
-        targetGroup = MultiValueAutoComplete.create(
+        targetGroupTextBox = MultiValueAutoComplete.create(
                 project, new MultiValueAutoComplete.DataProvider() {
                     @Override
                     public List<String> getValues(String prefix) {
@@ -180,7 +174,7 @@ public class CreateReviewPanel extends DialogWrapper {
                             }
                             return userNames;
                         } catch (Exception e) {
-                            ErrorManager.showMessage(e);
+                            ExceptionHandler.handleException(e);
                         }
                         return null;
                     }

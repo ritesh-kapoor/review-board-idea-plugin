@@ -19,19 +19,22 @@ package com.ritesh.idea.plugin.reviewboard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
 import com.ritesh.idea.plugin.reviewboard.model.*;
 import com.ritesh.idea.plugin.state.*;
 import com.ritesh.idea.plugin.util.Page;
-import com.ritesh.idea.plugin.util.exception.InvalidConfigurationException;
-import com.ritesh.idea.plugin.util.exception.ServerConnectionFailureException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableFloat;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
 
@@ -40,13 +43,17 @@ import java.util.concurrent.Future;
  */
 public class ReviewDataProvider {
     private ReviewBoardClient client;
+    private static Map<Project, ReviewDataProvider> reviewDataProviderMap = new WeakHashMap<>();
 
     public static ReviewDataProvider getInstance(Project project) {
         Configuration configuration = getConfiguration(project);
 
-        ReviewBoardClient client = new ReviewBoardClient(configuration.url
-                , configuration.username, configuration.password);
-        return new ReviewDataProvider(client);
+        if (!reviewDataProviderMap.containsKey(project)) {
+            ReviewBoardClient client = new ReviewBoardClient(configuration.url
+                    , configuration.username, configuration.password);
+            reviewDataProviderMap.put(project, new ReviewDataProvider(client));
+        }
+        return reviewDataProviderMap.get(project);
     }
 
     public static Configuration getConfiguration(final Project project) {
@@ -55,7 +62,7 @@ public class ReviewDataProvider {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPage.NAME);
+                    ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPage.SETTINGS_DISPLAY_NAME);
                 }
             });
             throw new InvalidConfigurationException("Review board not configured properly");
@@ -69,16 +76,17 @@ public class ReviewDataProvider {
         return state;
     }
 
+    private Reference<List<Repository>> repositoriesCache;
 
     private ReviewDataProvider(ReviewBoardClient client) {
         this.client = client;
     }
 
-    public static String reviewBoardUrl(Project project) {
+    public String reviewBoardUrl(Project project) {
         return getConfiguration(project).url;
     }
 
-    public static String reviewUrl(Project project, Review review) {
+    public String reviewUrl(Project project, Review review) {
         return reviewBoardUrl(project) + "/r/" + review.id + "/";
     }
 
@@ -104,20 +112,12 @@ public class ReviewDataProvider {
         client.updateReviewApi(reviewRequestId, description, summary, targetGroup, targetPeople, true);
     }
 
-    public void discardedReviewRequest(Review reviewRequest) {
-        try {
-            client.updateReviewRequestStatus(reviewRequest.id, "discarded");
-        } catch (IOException | URISyntaxException e) {
-            throw new ServerConnectionFailureException("Unable to connect to server", e);
-        }
+    public void discardedReviewRequest(Review reviewRequest) throws Exception {
+        client.updateReviewRequestStatus(reviewRequest.id, "discarded");
     }
 
-    public void submittedReviewRequest(Review reviewRequest) {
-        try {
-            client.updateReviewRequestStatus(reviewRequest.id, "submitted");
-        } catch (URISyntaxException | IOException e) {
-            throw new ServerConnectionFailureException("Unable to connect to server", e);
-        }
+    public void submittedReviewRequest(Review reviewRequest) throws Exception {
+        client.updateReviewRequestStatus(reviewRequest.id, "submitted");
     }
 
     public static void saveDefaultState(Project project, DefaultState defaultState) {
@@ -132,9 +132,9 @@ public class ReviewDataProvider {
         void progress(String text, float percentage);
     }
 
-    public Page<Review> listReviews(String fromUser, String toUser, String status, int start, int count) throws Exception {
+    public Page<Review> listReviews(String fromUser, String toUser, String status, String repositoryId, int start, int count) throws Exception {
         List<Review> reviews = new ArrayList<>();
-        RBReviewRequestList reviewRequestList = client.reviewRequestListApi(fromUser, toUser, status, start, count);
+        RBReviewRequestList reviewRequestList = client.reviewRequestListApi(fromUser, toUser, status, repositoryId, start, count);
         for (RBReviewRequestList.ReviewRequest request : reviewRequestList.review_requests) {
             String[] targetPeople = new String[request.target_people.length];
             for (int i = 0; i < targetPeople.length; i++) targetPeople[i] = request.target_people[i].title;
@@ -169,25 +169,15 @@ public class ReviewDataProvider {
     public void createReview(final Review reviewRequest, final List<Review.File.Comment> comments, String reviewComment,
                              final Progress progress) throws Exception {
         final RBReview review = client.createReviewApi(reviewRequest.id, null);
-        final List<Future> futures = new CopyOnWriteArrayList<>();
         final MutableFloat progressF = new MutableFloat(0f);
+
         for (final Review.File.Comment comment : comments) {
-            futures.add(ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        progress.progress("Updating comment", progressF.floatValue());
-                        client.createDiffComment(reviewRequest.id, String.valueOf(review.review.id),
-                                comment.file.fileId, comment.firstLine, comment.numberOfLines, comment.text);
-                        progressF.setValue(progressF.floatValue() + 1.0f / (comments.size() - 1));
-                    } catch (URISyntaxException | IOException e) {
-                        throw new ServerConnectionFailureException("Unable to connect to server", e);
-                    }
-                }
-            }));
+            progress.progress("Updating comment", progressF.floatValue());
+            client.createDiffComment(reviewRequest.id, String.valueOf(review.review.id),
+                    comment.file.fileId, comment.firstLine, comment.numberOfLines, comment.text);
+            progressF.setValue(progressF.floatValue() + 1.0f / (comments.size() - 1));
         }
 
-        for (Future future : futures) future.get();
         progress.progress("Making review public", progressF.floatValue());
         client.updateReviewApi(reviewRequest.id, String.valueOf(review.review.id), true, reviewComment, null);
         progress.progress("Review Completed", 1);
@@ -195,13 +185,16 @@ public class ReviewDataProvider {
 
 
     public List<Repository> repositories() throws Exception {
-        final RBRepository repositories = client.repositories(200);
-        List<Repository> result = new ArrayList<>();
-        for (RBRepository.Repository repository : repositories.repositories) {
-            result.add(new Repository(repository.id, repository.name));
+        if (repositoriesCache == null || repositoriesCache.get() == null) {
+            final RBRepository repositories = client.repositories(200);
+            List<Repository> result = new ArrayList<>();
+            for (RBRepository.Repository repository : repositories.repositories) {
+                result.add(new Repository(repository.id, repository.name));
+            }
+            repositoriesCache = new SoftReference<>(result);
+            return result;
         }
-        return result;
-
+        return repositoriesCache.get();
     }
 
 

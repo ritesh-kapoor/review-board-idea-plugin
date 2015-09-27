@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
@@ -42,6 +43,8 @@ import java.util.List;
  * @author Ritesh
  */
 public class HttpRequestBuilder {
+    public static final int CONNECT_TIMEOUT = 15000;
+
     private HttpRequestBase request;
     private URIBuilder urlBuilder = new URIBuilder();
     private String route = "";
@@ -49,6 +52,7 @@ public class HttpRequestBuilder {
     private String fileParam;
     private String fileName;
     private byte[] fileBytes;
+    private RequestConfig requestConfig;
 
     public HttpRequestBuilder route(String value) {
         route = route + "/" + value;
@@ -132,7 +136,7 @@ public class HttpRequestBuilder {
 
 
     public <T> T asJson(Class<T> clazz) throws IOException, URISyntaxException {
-        try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+        try (CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build()) {
             HttpRequestBase request = getHttpRequest();
             CloseableHttpResponse response = client.execute(request);
             Reader reader = new InputStreamReader(response.getEntity().getContent(), Consts.UTF_8);
@@ -142,7 +146,7 @@ public class HttpRequestBuilder {
 
 
     public String asString() throws IOException, URISyntaxException {
-        try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+        try (CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build()) {
             HttpRequestBase request = getHttpRequest();
             CloseableHttpResponse response = client.execute(request);
             return CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));
@@ -154,6 +158,7 @@ public class HttpRequestBuilder {
     }
 
     private HttpRequestBuilder() {
+        requestConfig = RequestConfig.copy(RequestConfig.DEFAULT).setConnectTimeout(CONNECT_TIMEOUT).build();
     }
 
 }

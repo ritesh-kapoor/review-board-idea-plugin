@@ -18,9 +18,10 @@ package com.ritesh.idea.plugin.reviewboard;
 
 import com.google.common.io.CharStreams;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.ritesh.idea.plugin.exception.InvalidCredentialException;
+import com.ritesh.idea.plugin.exception.ReviewBoardServerException;
 import com.ritesh.idea.plugin.reviewboard.model.*;
 import com.ritesh.idea.plugin.util.HttpRequestBuilder;
-import com.ritesh.idea.plugin.util.exception.InvalidCredentialException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
@@ -77,16 +78,17 @@ public class ReviewBoardClient {
             if (model.err.code.equals(ERRORCODE_LOGINFAILED)) {
                 throw new InvalidCredentialException(error);
             }
-            throw new RuntimeException(error);
+            throw new ReviewBoardServerException(error);
         }
         return model;
     }
 
     public RBReviewRequestList reviewRequestListApi(String fromUser, String toUser, String status,
-                                                    long start, long count) throws URISyntaxException, IOException {
+                                                    String repositoryId, long start, long count) throws URISyntaxException, IOException {
         HttpRequestBuilder requestBuilder = HttpRequestBuilder.get(url).route(API).route(REVIEW_REQUESTS).slash();
         if (toUser != null) requestBuilder.queryString("to-users", toUser);
         if (fromUser != null) requestBuilder.queryString("from-user", fromUser);
+        if (repositoryId != null) requestBuilder.queryString("repository", repositoryId);
 
         RBReviewRequestList result = requestBuilder.queryString("start", String.valueOf(start))
                 .queryString("max-results", String.valueOf(count))
@@ -227,8 +229,8 @@ public class ReviewBoardClient {
     public RBModel updateReviewApi(String reviewRequestId, String description, String summary, String targetGroups,
                                    String targetPeople, boolean isPublic) throws URISyntaxException, IOException {
         RBModel model = HttpRequestBuilder.post(url).route(API).route(REVIEW_REQUESTS)
-                .header(AUTHORIZATION, getAuthorizationHeader())
                 .route(reviewRequestId).route(DRAFT).slash()
+                .header(AUTHORIZATION, getAuthorizationHeader())
                 .field("summary", summary)
                 .field("description", description)
                 .field("target_groups", targetGroups)

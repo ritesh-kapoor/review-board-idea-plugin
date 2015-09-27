@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package com.ritesh.idea.plugin.util.exception;
+package com.ritesh.idea.plugin.util;
 
 /**
  * @author ritesh
  */
-public class ServerConnectionFailureException extends RuntimeException {
-    public ServerConnectionFailureException(String message) {
-        super(message);
-    }
-
-    public ServerConnectionFailureException(String message, Throwable cause) {
-        super(message, cause);
-    }
+public interface ThrowableFunction<P, R> {
+    R throwableCall(P params) throws Exception;
 }

@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 
+import java.util.List;
+
 /**
  * @author Ritesh
  */
@@ -50,7 +52,7 @@ public class GitUtil {
         return handler.run();
     }
 
-    public static String generateHeadDiff(Project project, VirtualFile root) throws VcsException {
+    public static String generateHeadDiff(Project project, VirtualFile root, List<VirtualFile> virtualFiles) throws VcsException {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
                 FileDocumentManager.getInstance().saveAllDocuments();
@@ -60,6 +62,7 @@ public class GitUtil {
         handler.setSilent(true);
         handler.setStdoutSuppressed(true);
         handler.addParameters("HEAD");
+        handler.addRelativeFiles(virtualFiles);
         LOG.info("Executing git command : " + handler.printableCommandLine());
         return handler.run();
     }

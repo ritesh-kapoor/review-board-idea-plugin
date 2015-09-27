@@ -18,11 +18,18 @@ package com.ritesh.idea.plugin.state;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
+import com.ritesh.idea.plugin.messages.PluginBundle;
 import com.ritesh.idea.plugin.reviewboard.ReviewDataProvider;
-import com.ritesh.idea.plugin.ui.ErrorManager;
-import com.ritesh.idea.plugin.ui.panels.LoginForm;
+import com.ritesh.idea.plugin.ui.ExceptionHandler;
+import com.ritesh.idea.plugin.ui.TaskUtil;
+import com.ritesh.idea.plugin.ui.panels.LoginPanel;
+import com.ritesh.idea.plugin.util.ThrowableFunction;
+import org.apache.commons.lang.mutable.MutableObject;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +42,10 @@ import java.awt.event.ActionListener;
  */
 public class SettingsPage implements Configurable {
 
-    public static final String NAME = "Review Board";
-    private LoginForm form = new LoginForm();
-    private Configuration oldState;
+    public static final String SETTINGS_DISPLAY_NAME = "Review Board";
+
+    private LoginPanel loginPanel = new LoginPanel();
+    private Configuration oldConfigurationState;
     private Project project;
 
     public SettingsPage(Project project) {
@@ -47,7 +55,7 @@ public class SettingsPage implements Configurable {
     @Nls
     @Override
     public String getDisplayName() {
-        return NAME;
+        return SETTINGS_DISPLAY_NAME;
     }
 
     @Nullable
@@ -59,42 +67,34 @@ public class SettingsPage implements Configurable {
     @Nullable
     @Override
     public JComponent createComponent() {
-        oldState = ConfigurationPersistance.getInstance(project).getState();
-        if (oldState != null) {
-            form.setUrl(oldState.url);
-            form.setUsername(oldState.username);
-            form.setPassword(oldState.password);
+        oldConfigurationState = ConfigurationPersistance.getInstance(project).getState();
+        if (oldConfigurationState != null) {
+            loginPanel.setUrl(oldConfigurationState.url);
+            loginPanel.setUsername(oldConfigurationState.username);
+            loginPanel.setPassword(oldConfigurationState.password);
         }
-        form.addActionListener(new ActionListener() {
+        loginPanel.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    form.setMessage("");
-                    ReviewDataProvider.getInstance(project)
-                            .testConnection(form.getUrl(), form.getUsername(), form.getPassword());
-                    form.setMessage("Connection established successfully.");
-                } catch (Exception e1) {
-                    ErrorManager.Message message = ErrorManager.getMessage(e1);
-                    form.setMessage(message.message);
-                }
+                testConnection();
             }
         });
-        return form.getPanel();
+        return loginPanel.getPanel();
     }
 
     @Override
     public boolean isModified() {
-        if (oldState == null) {
-            return !form.getUrl().isEmpty() || !form.getUsername().isEmpty() || !form.getPassword().isEmpty();
+        if (oldConfigurationState == null) {
+            return !loginPanel.getUrl().isEmpty() || !loginPanel.getUsername().isEmpty() || !loginPanel.getPassword().isEmpty();
         }
-        return !Comparing.equal(form.getUrl(), oldState.url) ||
-                !Comparing.equal(form.getUsername(), oldState.username) ||
-                !Comparing.equal(form.getPassword(), oldState.password);
+        return !Comparing.equal(loginPanel.getUrl(), oldConfigurationState.url) ||
+                !Comparing.equal(loginPanel.getUsername(), oldConfigurationState.username) ||
+                !Comparing.equal(loginPanel.getPassword(), oldConfigurationState.password);
     }
 
     @Override
     public void apply() throws ConfigurationException {
-        Configuration configuration = new Configuration(form.getUrl(), form.getUsername(), form.getPassword());
+        Configuration configuration = new Configuration(loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword());
         ConfigurationPersistance.getInstance(project).loadState(configuration);
     }
 
@@ -106,5 +106,34 @@ public class SettingsPage implements Configurable {
     @Override
     public void disposeUIResources() {
 
+    }
+
+    private void testConnection() {
+        final MutableObject connException = new MutableObject();
+        TaskUtil.queueTask(project, PluginBundle.message(PluginBundle.CONNECTION_TEST_TITLE), true, new ThrowableFunction<ProgressIndicator, Void>() {
+            @Override
+            public Void throwableCall(ProgressIndicator params) throws Exception {
+                try {
+                    params.setIndeterminate(true);
+                    ReviewDataProvider.getInstance(project)
+                            .testConnection(loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword());
+                    // The task was not cancelled and is successful
+                    connException.setValue(Boolean.TRUE);
+                } catch (InvalidConfigurationException a) {
+                } catch (final Exception exception) {
+                    connException.setValue(exception);
+                }
+                return null;
+            }
+        }, null, null);
+
+        if (connException.getValue() == Boolean.TRUE) {
+            Messages.showInfoMessage(project, PluginBundle.message(PluginBundle.LOGIN_SUCCESS_MESSAGE),
+                    PluginBundle.message(PluginBundle.CONNECTION_STATUS_TITLE));
+        } else if (connException.getValue() instanceof Exception) {
+            final ExceptionHandler.Message message = ExceptionHandler.getMessage((Exception) connException.getValue());
+            Messages.showErrorDialog(message.message,
+                    PluginBundle.message(PluginBundle.CONNECTION_STATUS_TITLE));
+        }
     }
 }

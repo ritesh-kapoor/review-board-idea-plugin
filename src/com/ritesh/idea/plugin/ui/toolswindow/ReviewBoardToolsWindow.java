@@ -19,6 +19,7 @@ package com.ritesh.idea.plugin.ui.toolswindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.ritesh.idea.plugin.ui.toolswindow.reviewpanel.ReviewsPanel;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;

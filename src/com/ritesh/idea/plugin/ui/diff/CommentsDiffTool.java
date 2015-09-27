@@ -35,10 +35,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.ritesh.idea.plugin.reviewboard.Review;
+import com.ritesh.idea.plugin.reviewboard.Review.File.Comment;
+import com.ritesh.idea.plugin.ui.panels.CommentPanel;
 import com.ritesh.idea.plugin.ui.panels.CommentsListViewPanel;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,111 +53,136 @@ import java.util.Map;
  */
 public class CommentsDiffTool extends FrameDiffTool {
     private Review.File file;
-    private List<Review.File.Comment> comments;
-    private List<RangeHighlighter> customRangeHighlighters = new ArrayList<>();
+    private List<Comment> comments;
+    private List<RangeHighlighter> newCommentHighlighters = new ArrayList<>();
+    private ListCellRenderer<Comment> listCellRenderer;
+    private ActionListener actionListener;
 
-    public CommentsDiffTool(Review.File file, List<Review.File.Comment> comments) {
+    public CommentsDiffTool(Review.File file, List<Comment> comments) {
         this.file = file;
-        this.comments = comments;
+        this.comments = new ArrayList<>(comments);
+        this.listCellRenderer = new ListCellRenderer<Comment>() {
+            @Override
+            public Component getListCellRendererComponent(JList list, final Comment value, final int index, boolean isSelected, boolean cellHasFocus) {
+                return new CommentPanel(value.user, value.text, value.timestamp).getPanel();
+            }
+        };
     }
 
     @Override
     public void show(DiffRequest request) {
         final FrameWrapper frameWrapper = new FrameWrapper(request.getProject(), request.getGroupKey());
-        frameWrapper.setTitle(request.getWindowTitle());
-
         final DiffPanelImpl diffPanel = createDiffPanelImpl(request, frameWrapper.getFrame(), frameWrapper);
         final Editor editor = diffPanel.getEditor2();
-        highlightComments(editor);
+        updateHighLights(editor);
 
         editor.addEditorMouseListener(new EditorMouseAdapter() {
             @Override
             public void mouseClicked(EditorMouseEvent e) {
                 if (e.getArea().equals(EditorMouseEventArea.LINE_MARKERS_AREA)) {
+                    final Point locationOnScreen = e.getMouseEvent().getLocationOnScreen();
                     final int lineNumber = EditorUtil.yPositionToLogicalLine(editor, e.getMouseEvent()) + 1;
-                    final CommentsListViewPanel commentsListViewPanel = new CommentsListViewPanel(lineComments(comments).get(lineNumber));
-                    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(commentsListViewPanel, null)
-                            .setTitle("Comment")
-                            .setMovable(true)
-                            .setAdText("Hit Ctrl+Enter to add comment & double click comment to delete.")
-                            .setResizable(true)
-                            .createPopup();
-                    popup.show(RelativePoint.fromScreen(e.getMouseEvent().getLocationOnScreen()));
-
-                    commentsListViewPanel.addOnDeleteListener(new CommentsListViewPanel.DeleteEventListener() {
-                        @Override
-                        public void onDelete(CommentsListViewPanel.DeleteEvent event) {
-                            comments.remove(event.getComment());
-                            highlightComments(editor);
-                            popup.dispose();
-                        }
-                    });
-
-                    commentsListViewPanel.addListener(new AbstractAction() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            popup.dispose();
-                            Review.File.Comment comment = new Review.File.Comment();
-                            comment.text = commentsListViewPanel.getComment();
-                            comment.firstLine = lineNumber;
-                            comment.numberOfLines = 1;
-                            comment.file = file;
-                            comments.add(comment);
-                            highlightComments(editor);
-                        }
-                    });
+                    showCommentsView(locationOnScreen, lineNumber, editor);
                 }
             }
         });
 
         DiffUtil.initDiffFrame(request.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
+        frameWrapper.setTitle(request.getWindowTitle());
         frameWrapper.show();
     }
 
-    private void highlightComments(Editor editor) {
-        MarkupModel markup = editor.getMarkupModel();
-        int lineCount = markup.getDocument().getLineCount();
+    public void setActionListener(ActionListener actionListener) {
+        this.actionListener = actionListener;
+    }
 
-        for (RangeHighlighter customRangeHighlighter : customRangeHighlighters) {
+    private void showCommentsView(Point locationOnScreen, final int lineNumber, final Editor editor) {
+        List<Comment> comments = lineComments(CommentsDiffTool.this.comments).get(lineNumber);
+
+        final CommentsListViewPanel<Comment> commentsListViewPanel = new CommentsListViewPanel(comments, listCellRenderer);
+        final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(commentsListViewPanel, null)
+                .setTitle("Comment")
+                .setMovable(true)
+                .setAdText("Hit Ctrl+Enter to add comment & double click comment to delete.")
+                .setResizable(true)
+                .createPopup();
+        popup.show(RelativePoint.fromScreen(locationOnScreen));
+
+
+        commentsListViewPanel.setListener(new CommentsListViewPanel.CommentListener<Comment>() {
+            @Override
+            public void onAdd(String value) {
+                popup.dispose();
+                Comment newComment = new Comment();
+                newComment.text = value;
+                newComment.firstLine = lineNumber;
+                newComment.numberOfLines = 1;
+                newComment.file = file;
+                CommentsDiffTool.this.comments.add(newComment);
+                updateHighLights(editor);
+                actionListener.actionPerformed(new ActionEvent(this, 0, null));
+            }
+
+            @Override
+            public void onDelete(Comment value) {
+                if (value != null && value.id == null) {
+                    CommentsDiffTool.this.comments.remove(value);
+                    updateHighLights(editor);
+                }
+                popup.dispose();
+            }
+        });
+    }
+
+    private void updateHighLights(Editor editor) {
+        MarkupModel markup = editor.getMarkupModel();
+
+        for (RangeHighlighter customRangeHighlighter : newCommentHighlighters) {
             markup.removeHighlighter(customRangeHighlighter);
         }
-        customRangeHighlighters.clear();
+        newCommentHighlighters.clear();
 
-        Map<Integer, List<Review.File.Comment>> lineComments = lineComments(comments);
-        for (Map.Entry<Integer, List<Review.File.Comment>> entry : lineComments.entrySet()) {
+        int lineCount = markup.getDocument().getLineCount();
+
+        Map<Integer, List<Comment>> lineComments = lineComments(comments);
+        for (Map.Entry<Integer, List<Comment>> entry : lineComments.entrySet()) {
             if (entry.getKey() > lineCount) continue;
 
-            boolean containsNew = false;
-            for (Review.File.Comment comment : entry.getValue()) {
+            boolean hasNewComments = false;
+            for (Comment comment : entry.getValue()) {
                 if (comment.id == null) {
-                    containsNew = true;
+                    hasNewComments = true;
                     break;
                 }
             }
 
             TextAttributes attributes = new TextAttributes();
-            if (containsNew) attributes.setBackgroundColor(JBColor.PINK);
+            if (hasNewComments) attributes.setBackgroundColor(JBColor.PINK);
             else attributes.setBackgroundColor(JBColor.YELLOW);
 
             RangeHighlighter rangeHighlighter = markup
-                    .addLineHighlighter(entry.getKey() - 1, HighlighterLayer.SELECTION + (containsNew ? 2 : 1), attributes);
+                    .addLineHighlighter(entry.getKey() - 1, HighlighterLayer.SELECTION + (hasNewComments ? 2 : 1), attributes);
             rangeHighlighter.setGutterIconRenderer(new CommentGutterIconRenderer());
-            customRangeHighlighters.add(rangeHighlighter);
+            newCommentHighlighters.add(rangeHighlighter);
         }
     }
 
-    private Map<Integer, List<Review.File.Comment>> lineComments(List<Review.File.Comment> comments) {
-        Map<Integer, List<Review.File.Comment>> result = new HashMap<>();
-        for (Review.File.Comment comment : comments) {
+    private Map<Integer, List<Comment>> lineComments(List<Comment> comments) {
+        Map<Integer, List<Comment>> result = new HashMap<>();
+        for (Comment comment : comments) {
             if (result.get(comment.firstLine) == null) {
-                result.put(comment.firstLine, new ArrayList<Review.File.Comment>());
+                result.put(comment.firstLine, new ArrayList<Comment>());
             }
             result.get(comment.firstLine).add(comment);
         }
         return result;
     }
 
-    public List<Review.File.Comment> getComments() {
-        return comments;
+    public List<Comment> getNewComments() {
+        final List<Review.File.Comment> newComments = new ArrayList<>();
+        for (Comment comment : comments) {
+            if (comment.id == null) newComments.add(comment);
+        }
+        return newComments;
     }
 }

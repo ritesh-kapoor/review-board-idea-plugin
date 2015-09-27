@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.ritesh.idea.plugin.ui;
+package com.ritesh.idea.plugin.ui.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -27,10 +27,10 @@ import javax.swing.*;
 /**
  * @author ritesh
  */
-public class DoNothingAction extends DumbAwareAction implements CustomComponentAction {
+public class CustomComponentActionBase extends DumbAwareAction implements CustomComponentAction {
     private JComponent component;
 
-    public DoNothingAction(JComponent component) {
+    public CustomComponentActionBase(JComponent component) {
         this.component = component;
     }
 

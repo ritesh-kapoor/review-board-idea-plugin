@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.ritesh.idea.plugin.util.exception;
+package com.ritesh.idea.plugin.exception;
 
 /**
  * @author ritesh
  */
-public class InvalidConfigurationException extends RuntimeException {
-    public InvalidConfigurationException(String message) {
+public class InvalidCredentialException extends RuntimeException {
+    public InvalidCredentialException(String message) {
         super(message);
     }
 }
