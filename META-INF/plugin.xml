@@ -17,14 +17,14 @@
 <idea-plugin version="2">
     <id>com.ritesh.intellij.plugin.reviewboard</id>
     <name>Review board</name>
-    <version>0.1.2-beta</version>
+    <version>0.1.0</version>
     <vendor email="riteshkapoor.opensource@gmail.com" logo="/reviewBoardLogo.png"
             url="https://github.com/ritesh-kapoor/review-board-idea-plugin">
         Ritesh Kapoor
     </vendor>
 
     <description><![CDATA[
-        <p>Review Board Code Review Tool</p>
+       <p>Review Board Code Review Tool</p>
         <p>Only <strong>Reviewboard 2.0.5 or newer</strong> is supported</p>
         <p>Features:
             <ul>
@@ -46,8 +46,16 @@
         </p>
         <p>If you find any issues, please report them (please use the <a href="https://github.com/ritesh-kapoor/review-board-idea-plugin/issues">GitHub issue tracker</a> instead of review comments).</p>
         <p>If you like this plugin, you can support it by writing review and voting for it on IntelliJ plugin repository</a>
-
         </p>
+        <p>Change Notes</p>
+        <p>Version 0.1.0
+            <ul>
+                <li>Bug fixes</li>
+                <li>Performance improvements</li>
+                <li>Usability improvements</li>
+            </ul>
+        </p>
+
     ]]></description>
 
     <change-notes><![CDATA[
