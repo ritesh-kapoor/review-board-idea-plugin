@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.ui.GuiUtils;
@@ -103,8 +102,24 @@ public class ReviewsPanel extends JPanel {
     public void setCurrentReview(List<Review.File> files) {
         final List<Change> changes = new ArrayList<>();
         for (Review.File file : files) {
-            FilePath srcFilePath = FilePathImpl.createNonLocal(file.srcFileName, false);
-            FilePath patchFilePath = FilePathImpl.createNonLocal(file.dstFileName, false);
+            FilePath srcFilePath;
+            FilePath patchFilePath;
+            try {
+                Class<?> aClass = Class.forName("com.intellij.openapi.vcs.LocalFilePath");
+                srcFilePath = (FilePath) aClass.getDeclaredConstructor(String.class, boolean.class).newInstance(file.srcFileName, false);
+                patchFilePath = (FilePath) aClass.getDeclaredConstructor(String.class, boolean.class).newInstance(file.dstFileName, false);
+            } catch (Exception e) {
+                try {
+                    srcFilePath = (FilePath) Class.forName("com.intellij.openapi.vcs.FilePathImpl")
+                            .getDeclaredMethod("createNonLocal", String.class, boolean.class)
+                            .invoke(null, file.srcFileName, false);
+                    patchFilePath = (FilePath) Class.forName("com.intellij.openapi.vcs.FilePathImpl")
+                            .getDeclaredMethod("createNonLocal", String.class, boolean.class)
+                            .invoke(null, file.dstFileName, false);
+                } catch (Exception e1) {
+                    throw new RuntimeException(e1);
+                }
+            }
             SimpleContentRevision original = new SimpleContentRevision(file.srcFileContents, srcFilePath, file.sourceRevision);
             SimpleContentRevision patched = new SimpleContentRevision(file.dstFileContents, patchFilePath, "New Change");
             changes.add(new Change(original, patched));
