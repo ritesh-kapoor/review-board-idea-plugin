@@ -29,6 +29,7 @@ import com.ritesh.idea.plugin.ui.ExceptionHandler;
 import com.ritesh.idea.plugin.ui.TaskUtil;
 import com.ritesh.idea.plugin.ui.panels.LoginPanel;
 import com.ritesh.idea.plugin.util.ThrowableFunction;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableObject;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -96,6 +97,7 @@ public class SettingsPage implements Configurable {
     public void apply() throws ConfigurationException {
         Configuration configuration = new Configuration(loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword());
         ConfigurationPersistance.getInstance(project).loadState(configuration);
+        ReviewDataProvider.reset();
     }
 
     @Override
@@ -110,6 +112,11 @@ public class SettingsPage implements Configurable {
 
     private void testConnection() {
         final MutableObject connException = new MutableObject();
+        if (StringUtils.isEmpty(loginPanel.getUrl()) || StringUtils.isEmpty(loginPanel.getUsername())
+                || StringUtils.isEmpty(loginPanel.getPassword())) {
+            Messages.showErrorDialog(project, "Connection information provided is invalid.", "Invalid Settings");
+            return;
+        }
         TaskUtil.queueTask(project, PluginBundle.message(PluginBundle.CONNECTION_TEST_TITLE), true, new ThrowableFunction<ProgressIndicator, Void>() {
             @Override
             public Void throwableCall(ProgressIndicator params) throws Exception {

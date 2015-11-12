@@ -17,11 +17,13 @@
 package com.ritesh.idea.plugin.reviewboard;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
 import com.ritesh.idea.plugin.reviewboard.model.*;
-import com.ritesh.idea.plugin.state.*;
+import com.ritesh.idea.plugin.state.Configuration;
+import com.ritesh.idea.plugin.state.ConfigurationPersistance;
+import com.ritesh.idea.plugin.state.DefaultState;
+import com.ritesh.idea.plugin.state.DefaultStatePersistance;
 import com.ritesh.idea.plugin.util.Page;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableFloat;
@@ -56,15 +58,13 @@ public class ReviewDataProvider {
         return reviewDataProviderMap.get(project);
     }
 
+    public static void reset(){
+        reviewDataProviderMap.clear();
+    }
+
     public static Configuration getConfiguration(final Project project) {
         Configuration state = ConfigurationPersistance.getInstance(project).getState();
         if (state == null || StringUtils.isEmpty(state.url) || StringUtils.isEmpty(state.username) || StringUtils.isEmpty(state.password)) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPage.SETTINGS_DISPLAY_NAME);
-                }
-            });
             throw new InvalidConfigurationException("Review board not configured properly");
         }
         return state;

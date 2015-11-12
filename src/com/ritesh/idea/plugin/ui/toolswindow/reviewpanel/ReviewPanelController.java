@@ -18,12 +18,15 @@ package com.ritesh.idea.plugin.ui.toolswindow.reviewpanel;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
 import com.ritesh.idea.plugin.reviewboard.Repository;
 import com.ritesh.idea.plugin.reviewboard.Review;
 import com.ritesh.idea.plugin.reviewboard.ReviewDataProvider;
+import com.ritesh.idea.plugin.state.SettingsPage;
 import com.ritesh.idea.plugin.ui.TaskUtil;
 import com.ritesh.idea.plugin.util.Page;
 import com.ritesh.idea.plugin.util.ThrowableFunction;
@@ -65,15 +68,25 @@ public class ReviewPanelController {
             @Override
             public Page<Review> throwableCall(final ProgressIndicator progressIndicator) throws Exception {
 
-                final String username = ReviewDataProvider.getConfiguration(project).username;
-                final String fromUser = reviewListFilter == ReviewListFilter.OUTGOING ? username : null;
-                final String toUser = reviewListFilter == ReviewListFilter.INCOMING ? username : null;
+                try {
+                    final String username = ReviewDataProvider.getConfiguration(project).username;
+                    final String fromUser = reviewListFilter == ReviewListFilter.OUTGOING ? username : null;
+                    final String toUser = reviewListFilter == ReviewListFilter.INCOMING ? username : null;
 
-                reviews = ReviewDataProvider.getInstance(project).listReviews(fromUser, toUser, status, repositoryId
-                        , start, count);
-                view.setReviewsList(start / COUNT + 1, reviews.getResult());
-                view.enablePanel(true);
-                return reviews;
+                    reviews = ReviewDataProvider.getInstance(project).listReviews(fromUser, toUser, status, repositoryId
+                            , start, count);
+                    view.setReviewsList(start / COUNT + 1, reviews.getResult());
+                    view.enablePanel(true);
+                    return reviews;
+                } catch (InvalidConfigurationException e) {
+                    ApplicationManager.getApplication().invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            ShowSettingsUtil.getInstance().showSettingsDialog(project, SettingsPage.SETTINGS_DISPLAY_NAME);
+                        }
+                    });
+                    throw e;
+                }
             }
         }, null, null);
     }
