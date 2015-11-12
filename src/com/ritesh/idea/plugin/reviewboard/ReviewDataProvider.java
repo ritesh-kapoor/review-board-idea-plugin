@@ -108,7 +108,7 @@ public class ReviewDataProvider {
                                     String repositoryId, String diffContent) throws Exception {
         RBCreateReview reviewRequestApi = client.createReviewRequestApi(repositoryId);
         String reviewRequestId = String.valueOf(reviewRequestApi.review_request.id);
-        client.draftDiffUploadApi(reviewRequestId, diffContent);
+        client.draftDiffUploadApi(reviewRequestId, diffContent, "/");
         client.updateReviewApi(reviewRequestId, description, summary, targetGroup, targetPeople, true);
     }
 

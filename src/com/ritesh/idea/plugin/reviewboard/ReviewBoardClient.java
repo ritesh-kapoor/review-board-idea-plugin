@@ -199,10 +199,11 @@ public class ReviewBoardClient {
         return checkSuccess(result);
     }
 
-    public RBModel draftDiffUploadApi(String reviewRequestId, String content) throws URISyntaxException, IOException {
+    public RBModel draftDiffUploadApi(String reviewRequestId, String content, String basedir) throws URISyntaxException, IOException {
         RBModel model = HttpRequestBuilder.post(url).route(API).route(REVIEW_REQUESTS)
-                .header(AUTHORIZATION, getAuthorizationHeader())
                 .route(reviewRequestId).route(DIFFS).slash()
+                .header(AUTHORIZATION, getAuthorizationHeader())
+                .field("basedir", basedir)
                 .file("path", "git.diff", content.getBytes(CharsetToolkit.UTF8_CHARSET))
                 .asJson(RBModel.class);
         return checkSuccess(model);

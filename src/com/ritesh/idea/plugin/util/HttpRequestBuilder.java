@@ -118,7 +118,11 @@ public class HttpRequestBuilder {
         request.setURI(urlBuilder.build());
         if (request instanceof HttpPost) {
             if (fileParam != null) {
-                HttpEntity entity = MultipartEntityBuilder.create()
+                MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+                for (NameValuePair formParam : formParams) {
+                    builder.addTextBody(formParam.getName(), formParam.getValue());
+                }
+                HttpEntity entity = builder
                         .addBinaryBody(fileParam, fileBytes, ContentType.MULTIPART_FORM_DATA, fileName)
                         .build();
                 ((HttpPost) request).setEntity(entity);

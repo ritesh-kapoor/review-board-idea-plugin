@@ -33,6 +33,8 @@ public class PluginBundle {
     public static final String CONNECTION_STATUS_TITLE = "reviewboard.message.connection.status.title";
     public static final String CONNECTION_TEST_TITLE = "reviewboard.message.connection.title";
     public static final String NOTIFICATION_TITLE = "reviewboard.notification.title";
+    public static final String UNSUPPORTED_VCS_TITLE = "reviewboard.unsupported.vcs.title";
+    public static final String UNSUPPORTED_VCS_MESSAGE = "reviewboard.unsupported.vcs.message";
 
     public static String message(@NotNull String key, @NotNull Object... params) {
         return getBundle().getString(key);

@@ -16,15 +16,20 @@
 
 package com.ritesh.idea.plugin.ui.action;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.ritesh.idea.plugin.git.GitUtil;
+import com.intellij.openapi.ui.Messages;
+import com.ritesh.idea.plugin.diff.IVcsDiffProvider;
+import com.ritesh.idea.plugin.diff.VcsDiffProviderFactory;
+import com.ritesh.idea.plugin.messages.PluginBundle;
 import com.ritesh.idea.plugin.reviewboard.ReviewDataProvider;
 import com.ritesh.idea.plugin.state.DefaultState;
 import com.ritesh.idea.plugin.ui.ExceptionHandler;
@@ -32,8 +37,7 @@ import com.ritesh.idea.plugin.ui.TaskUtil;
 import com.ritesh.idea.plugin.ui.panels.DraftReviewPanel;
 import com.ritesh.idea.plugin.util.ThrowableFunction;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 /**
  * @author Ritesh
@@ -41,23 +45,42 @@ import java.util.List;
 public class ShowReviewBoard extends AnAction {
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(final AnActionEvent e) {
         try {
             final Project project = e.getProject();
-
-            String diffContent;
-            VcsRevisionNumber[] data = e.getData(VcsDataKeys.VCS_REVISION_NUMBERS);
-            if (data != null) {
-                diffContent = GitUtil.generateDiffFromRevision(project, project.getBaseDir(), data[0], data[data.length - 1]);
-            } else {
-                final Change[] changes = e.getData(VcsDataKeys.CHANGES);
-                List<VirtualFile> virtualFiles = new ArrayList<>();
-                for (Change change : changes) {
-                    virtualFiles.add(change.getVirtualFile());
+            final IVcsDiffProvider vcsDiffProvider = VcsDiffProviderFactory.getVcsDiffProvider(project);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                    FileDocumentManager.getInstance().saveAllDocuments();
                 }
-                diffContent = GitUtil.generateHeadDiff(project, project.getBaseDir(), virtualFiles);
+            });
+            if (vcsDiffProvider == null) {
+                Notifications.Bus.notify(new Notification("ReviewBoard", PluginBundle.message(PluginBundle.UNSUPPORTED_VCS_TITLE),
+                        PluginBundle.message(PluginBundle.UNSUPPORTED_VCS_MESSAGE), NotificationType.WARNING));
+                return;
             }
-            showCreateReviewPanel(project, diffContent);
+            if (vcsDiffProvider.isFromRevision(project, e) ||
+                    Messages.showOkCancelDialog(project, "Upload all local changes?", "Confirmation",
+                            AllIcons.General.BalloonWarning) == Messages.OK) {
+                TaskUtil.queueTask(project, "Generating diff", false, new ThrowableFunction<ProgressIndicator, Object>() {
+                    @Override
+                    public Object throwableCall(ProgressIndicator params) throws Exception {
+                        final String diffContent = vcsDiffProvider.generateDiff(project, e);
+                        ApplicationManager.getApplication().invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (isEmpty(diffContent)) {
+                                    Messages.showErrorDialog(project, "Cannot generate diff", "Error");
+                                } else {
+                                    showCreateReviewPanel(project, diffContent);
+                                }
+                            }
+                        });
+                        return null;
+                    }
+                }, null, null);
+
+            }
         } catch (Exception ex) {
             ExceptionHandler.handleException(ex);
         }

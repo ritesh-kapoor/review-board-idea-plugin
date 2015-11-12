@@ -66,6 +66,7 @@
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
     <idea-version since-build="131"/>
     <depends>Git4Idea</depends>
+    <depends>Subversion</depends>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
@@ -97,6 +98,7 @@
                 description="Publish change to review board">
             <add-to-group group-id="VersionControlsGroup" anchor="first"/>
             <add-to-group group-id="Vcs.Log.ContextMenu" anchor="first"/>
+            <add-to-group group-id="CommittedChangesToolbar" anchor="last" relative-to-action=""/>
         </action>
     </actions>
 
