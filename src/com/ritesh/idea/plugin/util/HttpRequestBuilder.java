@@ -18,7 +18,7 @@ package com.ritesh.idea.plugin.util;
 
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
-import org.apache.http.Consts;
+import com.ritesh.idea.plugin.exception.UnexpectedResponseException;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -33,7 +33,6 @@ import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -114,7 +113,11 @@ public class HttpRequestBuilder {
     }
 
     private HttpRequestBase getHttpRequest() throws URISyntaxException, UnsupportedEncodingException {
-        if (!route.isEmpty()) urlBuilder.setPath(route);
+        if (!route.isEmpty()) {
+            String path = urlBuilder.getPath() + route;
+            path = path.replace("//", "/");
+            urlBuilder.setPath(path);
+        }
         request.setURI(urlBuilder.build());
         if (request instanceof HttpPost) {
             if (fileParam != null) {
@@ -143,8 +146,12 @@ public class HttpRequestBuilder {
         try (CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build()) {
             HttpRequestBase request = getHttpRequest();
             CloseableHttpResponse response = client.execute(request);
-            Reader reader = new InputStreamReader(response.getEntity().getContent(), Consts.UTF_8);
-            return new Gson().fromJson(reader, clazz);
+            String content = CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));
+            try {
+                return new Gson().fromJson(content, clazz);
+            } catch (Exception e) {
+                throw new UnexpectedResponseException("Response : " + content, e);
+            }
         }
     }
 
