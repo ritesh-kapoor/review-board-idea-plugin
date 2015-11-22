@@ -79,7 +79,7 @@ public class CommentsDiffTool extends FrameDiffTool {
         editor.addEditorMouseListener(new EditorMouseAdapter() {
             @Override
             public void mouseClicked(EditorMouseEvent e) {
-                if (e.getArea().equals(EditorMouseEventArea.LINE_MARKERS_AREA)) {
+                if (e.getArea() != null && e.getArea().equals(EditorMouseEventArea.LINE_MARKERS_AREA)) {
                     final Point locationOnScreen = e.getMouseEvent().getLocationOnScreen();
                     final int lineNumber = EditorUtil.yPositionToLogicalLine(editor, e.getMouseEvent()) + 1;
                     showCommentsView(locationOnScreen, lineNumber, editor);
@@ -103,6 +103,8 @@ public class CommentsDiffTool extends FrameDiffTool {
         final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(commentsListViewPanel, null)
                 .setTitle("Comment")
                 .setMovable(true)
+                .setRequestFocus(true)
+                .setCancelOnWindowDeactivation(false)
                 .setAdText("Hit Ctrl+Enter to add comment & double click comment to delete.")
                 .setResizable(true)
                 .createPopup();
