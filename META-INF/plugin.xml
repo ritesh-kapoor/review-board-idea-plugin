@@ -96,7 +96,7 @@
         <action id="ReviewBoard.PublishReview" class="com.ritesh.idea.plugin.ui.action.ShowReviewBoard"
                 text="Publish Review" icon="/reviewBoardLogo.png"
                 description="Publish change to review board">
-            <add-to-group group-id="VersionControlsGroup" anchor="first"/>
+            <add-to-group group-id="ChangesViewToolbar" anchor="first"/>
             <add-to-group group-id="Vcs.Log.ContextMenu" anchor="first"/>
             <add-to-group group-id="CommittedChangesToolbar" anchor="last" relative-to-action=""/>
         </action>

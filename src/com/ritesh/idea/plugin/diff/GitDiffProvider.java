@@ -40,11 +40,7 @@ public class GitDiffProvider implements IVcsDiffProvider {
     @Override
     public boolean isFromRevision(Project project, AnActionEvent action) throws VcsException {
         VcsRevisionNumber[] data = action.getData(VcsDataKeys.VCS_REVISION_NUMBERS);
-        if (data != null) {
-            return true;
-        } else {
-            return false;
-        }
+        return data != null;
     }
 
     @Override
@@ -55,12 +51,15 @@ public class GitDiffProvider implements IVcsDiffProvider {
             diffContent = fromRevisions(project, project.getBaseDir(), data[data.length - 1], data[0]);
         } else {
             final Change[] changes = action.getData(VcsDataKeys.CHANGES);
+//            if (changes == null) {
+//                return null;
+//            }
             List<VirtualFile> virtualFiles = new ArrayList<>();
-            for (Change change : changes) {
-                if (change.getVirtualFile() != null) {
-                    virtualFiles.add(change.getVirtualFile());
-                }
-            }
+//            for (Change change : changes) {
+//                if (change.getVirtualFile() != null) {
+//                    virtualFiles.add(change.getVirtualFile());
+//                }
+//            }
             diffContent = fromHead(project, project.getBaseDir(), virtualFiles);
         }
         return diffContent;
