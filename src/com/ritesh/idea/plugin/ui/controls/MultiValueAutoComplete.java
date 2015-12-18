@@ -93,7 +93,10 @@ public class MultiValueAutoComplete {
             ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
                 @Override
                 public void run() {
-                    values.addAll(dataProvider.getValues(prefix));
+                    List<String> values = dataProvider.getValues(prefix);
+                    if(values!=null) {
+                        values.addAll(values);
+                    }
                     completed.setValue(true);
                 }
             });
