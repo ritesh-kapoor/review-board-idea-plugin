@@ -166,7 +166,9 @@ public class ReviewBoardClient {
 
     public String contents(String href) {
         try {
-            HttpRequestBase request = HttpRequestBuilder.get(href).request();
+            HttpRequestBase request = HttpRequestBuilder.get(href)
+                    .header(AUTHORIZATION, getAuthorizationHeader())
+                    .request();
             try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
                 CloseableHttpResponse response = client.execute(request);
 
