@@ -86,7 +86,7 @@ public class SvnDiffProvider extends BaseSvnClient implements IVcsDiffProvider {
             }
         });
 
-        List<String> parameters = Arrays.asList("-r", lastRevisionNumber[0] + ":" + afterRevisionNumber);
+        List<String> parameters = Arrays.asList("-r", lastRevisionNumber[0] + ":" + afterRevisionNumber, "--patch-compatible");
         Command command = new Command(SvnCommandName.diff);
         command.setWorkingDirectory(new File(root.getPath()));
         command.setTarget(svnTarget);
@@ -113,6 +113,7 @@ public class SvnDiffProvider extends BaseSvnClient implements IVcsDiffProvider {
         }*/
         parameters.add("-r");
         parameters.add("HEAD");
+        parameters.add("--patch-compatible");
         Command command = new Command(SvnCommandName.diff);
         command.setWorkingDirectory(new File(root.getPath()));
         command.setTarget(svnTarget);

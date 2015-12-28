@@ -17,7 +17,7 @@
 <idea-plugin version="2">
     <id>com.ritesh.intellij.plugin.reviewboard</id>
     <name>Review board</name>
-    <version>0.1.1</version>
+    <version>v0.1.2</version>
     <vendor email="riteshkapoor.opensource@gmail.com" logo="/reviewBoardLogo.png"
             url="https://github.com/ritesh-kapoor/review-board-idea-plugin">
         Ritesh Kapoor
@@ -39,7 +39,6 @@
         </p>
         <p>Limitations:
             <ul>
-                <li>Only git & subversion are supported as of now</li>
                 <li>Viewing multiple reviews is not supported</li>
                 <li>Updating diff is not supported</li>
             </ul>
@@ -52,6 +51,13 @@
 
     <change-notes><![CDATA[
        <p>Change Notes</p>
+         <p>Version 0.1.2
+            <ul>
+                <li>Bug fixes</li>
+                <li>Support for PyCharm 5</li>
+                <li>Now diff can be generated through rbtools (Option is available in settings)</li>
+            </ul>
+        </p>
        <p>Version 0.1.1
             <ul>
                 <li>Bug fixes</li>
@@ -71,6 +77,7 @@
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
     <idea-version since-build="131"/>
+    <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends>Subversion</depends>
 

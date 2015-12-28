@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.VcsException;
 import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
 import com.ritesh.idea.plugin.exception.InvalidCredentialException;
 import com.ritesh.idea.plugin.exception.ReviewBoardServerException;
@@ -61,6 +62,9 @@ public class ExceptionHandler {
         } else if (exception instanceof URISyntaxException || exception instanceof IOException) {
             LOG.warn(exception.getMessage());
             return new Message(PluginBundle.message(PluginBundle.CONNECTION_ERROR_MSG), Message.Type.WARNING);
+        } else if (exception instanceof VcsException) {
+            LOG.warn(exception.getMessage());
+            return new Message(exception.getMessage(), Message.Type.WARNING);
         } else {
             LOG.error(exception);
             return new Message(defaultString(exception.getMessage()), Message.Type.ERROR);

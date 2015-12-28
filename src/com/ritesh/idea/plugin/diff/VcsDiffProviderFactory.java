@@ -19,6 +19,7 @@ package com.ritesh.idea.plugin.diff;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.ritesh.idea.plugin.state.Configuration;
 import git4idea.GitVcs;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -26,8 +27,11 @@ import org.jetbrains.idea.svn.SvnVcs;
  * @author ritesh
  */
 public class VcsDiffProviderFactory {
-    public static IVcsDiffProvider getVcsDiffProvider(Project project) {
+    public static IVcsDiffProvider getVcsDiffProvider(Project project, Configuration configuration) {
         AbstractVcs vcsFor = ProjectLevelVcsManager.getInstance(project).getVcsFor(project.getProjectFile());
+        if (configuration.useRbTools == Boolean.TRUE) {
+            return new RbToolsDiffProvider(configuration.url, configuration.username, configuration.password, vcsFor);
+        }
         if (vcsFor instanceof SvnVcs) {
             return new SvnDiffProvider();
         } else if (vcsFor instanceof GitVcs) {

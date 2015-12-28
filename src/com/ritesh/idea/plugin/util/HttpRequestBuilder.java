@@ -19,6 +19,7 @@ package com.ritesh.idea.plugin.util;
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.ritesh.idea.plugin.exception.UnexpectedResponseException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -148,9 +149,10 @@ public class HttpRequestBuilder {
             CloseableHttpResponse response = client.execute(request);
             String content = CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));
             try {
+                if (StringUtils.isEmpty(content)) throw new Exception("Empty response recieved");
                 return new Gson().fromJson(content, clazz);
             } catch (Exception e) {
-                throw new UnexpectedResponseException("Response : " + content, e);
+                throw new UnexpectedResponseException("Status: " + response.getStatusLine() + ", Response : " + content, e);
             }
         }
     }

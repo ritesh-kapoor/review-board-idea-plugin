@@ -16,6 +16,8 @@
 
 package com.ritesh.idea.plugin.ui.panels;
 
+import com.intellij.ui.components.JBCheckBox;
+
 import javax.swing.*;
 import java.awt.event.ActionListener;
 
@@ -28,6 +30,7 @@ public class LoginPanel {
     private JPasswordField password;
     private JTextField username;
     private JButton testConnection;
+    private JBCheckBox useRbTools;
 
     public LoginPanel() {
     }
@@ -62,5 +65,13 @@ public class LoginPanel {
 
     public void setPassword(String password) {
         this.password.setText(password);
+    }
+
+    public Boolean useRbTools() {
+        return useRbTools.isSelected();
+    }
+
+    public void setUseRbTools(Boolean useRbTools) {
+        this.useRbTools.setSelected(useRbTools == Boolean.TRUE);
     }
 }

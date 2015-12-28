@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-package com.ritesh.idea.plugin.reviewboard.model;
-
-import java.util.Map;
+package com.ritesh.idea.plugin.diff;
 
 /**
- * @author Ritesh
+ * Created by ritesh on 18/12/15.
  */
-public class RBModel {
-    public String stat;
-    public Error err;
-    public Map<String, Object> fields;
-    public String reason;
-    public String file;
-    public String revision;
+public class VcsRevision {
+    private String fromRevision;
+    private String toRevision;
 
-    public static class Error {
-        public String msg;
-        public String code;
+    public VcsRevision(String fromRevision, String toRevision) {
+        this.fromRevision = fromRevision;
+        this.toRevision = toRevision;
+    }
+
+    public String fromRevision() {
+        return fromRevision;
+    }
+
+    public String toRevision() {
+        return toRevision;
     }
 }

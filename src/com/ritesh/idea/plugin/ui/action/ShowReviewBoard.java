@@ -48,7 +48,8 @@ public class ShowReviewBoard extends AnAction {
     public void actionPerformed(final AnActionEvent e) {
         try {
             final Project project = e.getProject();
-            final IVcsDiffProvider vcsDiffProvider = VcsDiffProviderFactory.getVcsDiffProvider(project);
+            final IVcsDiffProvider vcsDiffProvider =
+                    VcsDiffProviderFactory.getVcsDiffProvider(project, ReviewDataProvider.getConfiguration(project));
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
                 public void run() {
                     FileDocumentManager.getInstance().saveAllDocuments();
@@ -65,17 +66,22 @@ public class ShowReviewBoard extends AnAction {
                 TaskUtil.queueTask(project, "Generating diff", false, new ThrowableFunction<ProgressIndicator, Object>() {
                     @Override
                     public Object throwableCall(ProgressIndicator params) throws Exception {
-                        final String diffContent = vcsDiffProvider.generateDiff(project, e);
-                        ApplicationManager.getApplication().invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (isEmpty(diffContent)) {
-                                    Messages.showErrorDialog(project, "Cannot generate diff", "Error");
-                                } else {
-                                    showCreateReviewPanel(project, diffContent);
+                        final String diffContent;
+                        try {
+                            diffContent = vcsDiffProvider.generateDiff(project, e);
+                            ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (isEmpty(diffContent)) {
+                                        Messages.showErrorDialog(project, "Cannot generate diff", "Error");
+                                    } else {
+                                        showCreateReviewPanel(project, diffContent);
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        } catch (Exception ex) {
+                            ExceptionHandler.handleException(ex);
+                        }
                         return null;
                     }
                 }, null, null);

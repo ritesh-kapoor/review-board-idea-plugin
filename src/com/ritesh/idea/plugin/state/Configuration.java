@@ -23,11 +23,13 @@ public class Configuration {
     public String url;
     public String username;
     public String password;
+    public Boolean useRbTools;
 
-    public Configuration(String url, String username, String password) {
+    public Configuration(String url, String username, String password, Boolean useRbTools) {
         this.url = url;
         this.username = username;
         this.password = password;
+        this.useRbTools = useRbTools;
     }
 
     public Configuration() {
@@ -36,7 +38,7 @@ public class Configuration {
     @Override
     protected Object clone() throws CloneNotSupportedException {
         super.clone();
-        return new Configuration(url, username, password);
+        return new Configuration(url, username, password, useRbTools);
     }
 
     @Override
@@ -44,6 +46,7 @@ public class Configuration {
         return "Configuration{" +
                 "username='" + username + '\'' +
                 ", url='" + url + '\'' +
+                ", useRbTools='" + useRbTools + '\'' +
                 '}';
     }
 
@@ -56,7 +59,8 @@ public class Configuration {
 
         return !(url != null ? !url.equals(that.url) : that.url != null)
                 && !(username != null ? !username.equals(that.username) : that.username != null)
-                && !(password != null ? !password.equals(that.password) : that.password != null);
+                && !(password != null ? !password.equals(that.password) : that.password != null)
+                && !(useRbTools != null ? !useRbTools.equals(that.useRbTools) : that.useRbTools != null);
 
     }
 
@@ -65,6 +69,7 @@ public class Configuration {
         int result = url != null ? url.hashCode() : 0;
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
+        result = 31 * result + (useRbTools != null ? useRbTools.hashCode() : 0);
         return result;
     }
 }
