@@ -35,6 +35,8 @@ public class PluginBundle {
     public static final String NOTIFICATION_TITLE = "reviewboard.notification.title";
     public static final String UNSUPPORTED_VCS_TITLE = "reviewboard.unsupported.vcs.title";
     public static final String UNSUPPORTED_VCS_MESSAGE = "reviewboard.unsupported.vcs.message";
+    public static final String RBTOOLS_PATH_TITLE = "reviewboard.message.rbtools.error.title";
+    public static final String RBTOOLS_PATH_ERROR_MESSAGE = "reviewboard.message.rbtools.error";
 
     public static String message(@NotNull String key, @NotNull Object... params) {
         return getBundle().getString(key);

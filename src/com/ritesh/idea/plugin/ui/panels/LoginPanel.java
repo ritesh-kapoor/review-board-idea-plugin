@@ -19,7 +19,10 @@ package com.ritesh.idea.plugin.ui.panels;
 import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Ritesh
@@ -31,8 +34,20 @@ public class LoginPanel {
     private JTextField username;
     private JButton testConnection;
     private JBCheckBox useRbTools;
+    private JTextField txtRBToolsPath;
+    private JButton btnRBToolsFileSelection;
+    private JLabel lblRBToolsPath;
+    private JPanel panelRBToolsPath;
 
     public LoginPanel() {
+    }
+    
+    public void addUseRBToolsListener(ItemListener l) {
+        useRbTools.addItemListener(l);
+    }
+
+    public void addRBToolsFilePathListener(ActionListener l) {
+        btnRBToolsFileSelection.addActionListener(l);
     }
 
     public void addActionListener(ActionListener l) {
@@ -73,5 +88,22 @@ public class LoginPanel {
 
     public void setUseRbTools(Boolean useRbTools) {
         this.useRbTools.setSelected(useRbTools == Boolean.TRUE);
+    }
+    
+    public String getRBToolsFilePath() {
+        return txtRBToolsPath.getText().trim();
+    }
+    
+    public void setRBToolsFilePath(String filePath) {
+        this.txtRBToolsPath.setText(filePath);
+    }
+    
+    public void toggleRBToolsPathVisibility(boolean show) {
+        lblRBToolsPath.setVisible(show);
+        panelRBToolsPath.setVisible(show);
+        
+        if(!show) {
+            setRBToolsFilePath("");
+        }
     }
 }

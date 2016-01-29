@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ritesh on 18/12/15.
@@ -42,12 +43,14 @@ import java.util.List;
 public class RbToolsDiffProvider implements IVcsDiffProvider {
     private static final Logger LOG = Logger.getInstance(RbToolsDiffProvider.class);
 
+    private String rbtPath;
     private String userName;
     private String password;
     private String url;
     private AbstractVcs vcs;
 
-    public RbToolsDiffProvider(String url, String userName, String password, AbstractVcs vcs) {
+    public RbToolsDiffProvider(String rbtPath, String url, String userName, String password, AbstractVcs vcs) {
+        this.rbtPath = rbtPath;
         this.userName = userName;
         this.password = password;
         this.url = url;
@@ -91,7 +94,7 @@ public class RbToolsDiffProvider implements IVcsDiffProvider {
 
     private String generateDiff(VcsRevision revision, String rootPath, List<String> additionalOptions) throws IOException {
         List<String> commands = new ArrayList<>();
-        commands.addAll(Arrays.asList("rbt", "diff", "--server", url, "--username", userName, "--password", password));
+        commands.addAll(Arrays.asList(rbtPath, "diff", "--server", url, "--username", userName, "--password", password));
         commands.addAll(additionalOptions);
 
         if (revision != null) {
@@ -105,6 +108,8 @@ public class RbToolsDiffProvider implements IVcsDiffProvider {
         ProcessBuilder builder = new ProcessBuilder(commands);
         builder.directory(new File(rootPath));
         builder.redirectErrorStream(true);
+        Map<String, String> processEnv = builder.environment();
+        processEnv.putAll(System.getenv());
         Process process = builder.start();
 
         String stdInput = CharStreams.toString(new InputStreamReader(process.getInputStream()));
