@@ -74,6 +74,7 @@ public class SettingsPage implements Configurable {
             loginPanel.setUsername(oldConfigurationState.username);
             loginPanel.setPassword(oldConfigurationState.password);
             loginPanel.setUseRbTools(oldConfigurationState.useRbTools);
+            loginPanel.setUseRbToolPath(oldConfigurationState.rbtPath);
         }
         loginPanel.addActionListener(new ActionListener() {
             @Override
@@ -92,13 +93,14 @@ public class SettingsPage implements Configurable {
         return !Comparing.equal(loginPanel.getUrl(), oldConfigurationState.url) ||
                 !Comparing.equal(loginPanel.getUsername(), oldConfigurationState.username) ||
                 !Comparing.equal(loginPanel.useRbTools(), oldConfigurationState.useRbTools) ||
+                !Comparing.equal(loginPanel.rbtPath(), oldConfigurationState.rbtPath) ||
                 !Comparing.equal(loginPanel.getPassword(), oldConfigurationState.password);
     }
 
     @Override
     public void apply() throws ConfigurationException {
         Configuration configuration = new Configuration(
-                loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword(), loginPanel.useRbTools());
+                loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword(), loginPanel.useRbTools(), loginPanel.rbtPath());
         ConfigurationPersistance.getInstance(project).loadState(configuration);
         ReviewDataProvider.reset();
     }

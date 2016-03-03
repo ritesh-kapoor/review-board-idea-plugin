@@ -20,6 +20,8 @@ import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Ritesh
@@ -31,8 +33,36 @@ public class LoginPanel {
     private JTextField username;
     private JButton testConnection;
     private JBCheckBox useRbTools;
+    private JTextField rbtPath;
+    private JCheckBox useRbtPath;
 
     public LoginPanel() {
+        useRbTools.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (useRbTools.isSelected()) {
+                    if (useRbtPath.isSelected()) rbtPath.setEnabled(true);
+                    useRbtPath.setEnabled(true);
+                } else {
+                    rbtPath.setEnabled(false);
+                    useRbtPath.setEnabled(false);
+                }
+            }
+        });
+
+        rbtPath.setEnabled(false);
+        useRbtPath.setEnabled(false);
+
+        useRbtPath.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (useRbtPath.isSelected() && useRbTools.isSelected()) {
+                    rbtPath.setEnabled(true);
+                } else {
+                    rbtPath.setEnabled(false);
+                }
+            }
+        });
     }
 
     public void addActionListener(ActionListener l) {
@@ -73,5 +103,20 @@ public class LoginPanel {
 
     public void setUseRbTools(Boolean useRbTools) {
         this.useRbTools.setSelected(useRbTools == Boolean.TRUE);
+    }
+
+    public void setUseRbToolPath(String path) {
+        if (path == null) {
+            rbtPath.setText("");
+            this.useRbtPath.setSelected(false);
+        } else {
+            rbtPath.setText(path);
+            this.useRbtPath.setSelected(true);
+        }
+    }
+
+    public String rbtPath() {
+        if (useRbtPath.isSelected() && useRbTools.isSelected()) return rbtPath.getText();
+        return null;
     }
 }

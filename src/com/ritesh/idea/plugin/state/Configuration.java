@@ -24,12 +24,14 @@ public class Configuration {
     public String username;
     public String password;
     public Boolean useRbTools;
+    public String rbtPath;
 
-    public Configuration(String url, String username, String password, Boolean useRbTools) {
+    public Configuration(String url, String username, String password, Boolean useRbTools, String rbtPath) {
         this.url = url;
         this.username = username;
         this.password = password;
         this.useRbTools = useRbTools;
+        this.rbtPath = rbtPath;
     }
 
     public Configuration() {
@@ -38,7 +40,7 @@ public class Configuration {
     @Override
     protected Object clone() throws CloneNotSupportedException {
         super.clone();
-        return new Configuration(url, username, password, useRbTools);
+        return new Configuration(url, username, password, useRbTools, rbtPath);
     }
 
     @Override
@@ -47,6 +49,7 @@ public class Configuration {
                 "username='" + username + '\'' +
                 ", url='" + url + '\'' +
                 ", useRbTools='" + useRbTools + '\'' +
+                ", rbtPath='" + rbtPath + '\'' +
                 '}';
     }
 
@@ -60,6 +63,7 @@ public class Configuration {
         return !(url != null ? !url.equals(that.url) : that.url != null)
                 && !(username != null ? !username.equals(that.username) : that.username != null)
                 && !(password != null ? !password.equals(that.password) : that.password != null)
+                && !(rbtPath != null ? !rbtPath.equals(that.rbtPath) : that.rbtPath != null)
                 && !(useRbTools != null ? !useRbTools.equals(that.useRbTools) : that.useRbTools != null);
 
     }
@@ -70,6 +74,7 @@ public class Configuration {
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (useRbTools != null ? useRbTools.hashCode() : 0);
+        result = 31 * result + (rbtPath != null ? rbtPath.hashCode() : 0);
         return result;
     }
 }
