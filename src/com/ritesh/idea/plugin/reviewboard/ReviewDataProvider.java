@@ -163,7 +163,8 @@ public class ReviewDataProvider {
     }
 
     public void shipIt(final Review reviewRequest) throws Exception {
-        client.createReviewApi(reviewRequest.id, true);
+        final RBReview review = client.createReviewApi(reviewRequest.id, true);
+        client.updateReviewApi(reviewRequest.id, String.valueOf(review.review.id), true, null, null);
     }
 
     public void createReview(final Review reviewRequest, final List<Review.File.Comment> comments, String reviewComment,
