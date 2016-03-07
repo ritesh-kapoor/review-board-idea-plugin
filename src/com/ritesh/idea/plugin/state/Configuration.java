@@ -24,6 +24,7 @@ public class Configuration {
     public String username;
     public String password;
     public Boolean useRbTools;
+    public String rbToolsPath;
 
     public Configuration(String url, String username, String password, Boolean useRbTools) {
         this.url = url;
@@ -32,13 +33,18 @@ public class Configuration {
         this.useRbTools = useRbTools;
     }
 
+    public Configuration(String url, String username, String password, Boolean useRbTools, String rbToolsFilePath) {
+        this(url, username, password, useRbTools);
+        this.rbToolsPath = rbToolsFilePath;
+    }
+
     public Configuration() {
     }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
         super.clone();
-        return new Configuration(url, username, password, useRbTools);
+        return new Configuration(url, username, password, useRbTools, rbToolsPath);
     }
 
     @Override
@@ -47,6 +53,7 @@ public class Configuration {
                 "username='" + username + '\'' +
                 ", url='" + url + '\'' +
                 ", useRbTools='" + useRbTools + '\'' +
+                ", rbToolsPath='" + rbToolsPath + '\'' +
                 '}';
     }
 
@@ -60,7 +67,8 @@ public class Configuration {
         return !(url != null ? !url.equals(that.url) : that.url != null)
                 && !(username != null ? !username.equals(that.username) : that.username != null)
                 && !(password != null ? !password.equals(that.password) : that.password != null)
-                && !(useRbTools != null ? !useRbTools.equals(that.useRbTools) : that.useRbTools != null);
+                && !(useRbTools != null ? !useRbTools.equals(that.useRbTools) : that.useRbTools != null)
+                && !(rbToolsPath != null ? !rbToolsPath.equals(that.rbToolsPath) : that.rbToolsPath != null);
 
     }
 
@@ -70,6 +78,7 @@ public class Configuration {
         result = 31 * result + (username != null ? username.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (useRbTools != null ? useRbTools.hashCode() : 0);
+        result = 31 * result + (rbToolsPath != null ? rbToolsPath.hashCode() : 0);
         return result;
     }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.components.JBCheckBox;
 import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
 import com.ritesh.idea.plugin.messages.PluginBundle;
 import com.ritesh.idea.plugin.reviewboard.ReviewDataProvider;
@@ -35,8 +36,15 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.io.File;
 
 /**
  * @author Ritesh
@@ -74,11 +82,25 @@ public class SettingsPage implements Configurable {
             loginPanel.setUsername(oldConfigurationState.username);
             loginPanel.setPassword(oldConfigurationState.password);
             loginPanel.setUseRbTools(oldConfigurationState.useRbTools);
+            loginPanel.setRBToolsFilePath(oldConfigurationState.rbToolsPath);
+            loginPanel.toggleRBToolsPathVisibility(oldConfigurationState.useRbTools);
         }
         loginPanel.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 testConnection();
+            }
+        });
+        loginPanel.addRBToolsFilePathListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showRBToolsFileChooser();
+            }
+        });
+        loginPanel.addUseRBToolsListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                loginPanel.toggleRBToolsPathVisibility(loginPanel.useRbTools());
             }
         });
         return loginPanel.getPanel();
@@ -87,18 +109,26 @@ public class SettingsPage implements Configurable {
     @Override
     public boolean isModified() {
         if (oldConfigurationState == null) {
-            return !loginPanel.getUrl().isEmpty() || !loginPanel.getUsername().isEmpty() || !loginPanel.getPassword().isEmpty();
+            return !loginPanel.getUrl().isEmpty() || !loginPanel.getUsername().isEmpty() || !loginPanel.getPassword().isEmpty() 
+                    || !loginPanel.getRBToolsFilePath().isEmpty();
         }
         return !Comparing.equal(loginPanel.getUrl(), oldConfigurationState.url) ||
                 !Comparing.equal(loginPanel.getUsername(), oldConfigurationState.username) ||
                 !Comparing.equal(loginPanel.useRbTools(), oldConfigurationState.useRbTools) ||
-                !Comparing.equal(loginPanel.getPassword(), oldConfigurationState.password);
+                !Comparing.equal(loginPanel.getPassword(), oldConfigurationState.password) ||
+                !Comparing.equal(loginPanel.getRBToolsFilePath(), oldConfigurationState.rbToolsPath);
     }
 
     @Override
     public void apply() throws ConfigurationException {
+        if(loginPanel.useRbTools() && loginPanel.getRBToolsFilePath().trim().length() <= 0) {
+            Messages.showErrorDialog(PluginBundle.message(PluginBundle.RBTOOLS_PATH_ERROR_MESSAGE),
+                    PluginBundle.message(PluginBundle.RBTOOLS_PATH_TITLE));
+            return;
+        }
+        
         Configuration configuration = new Configuration(
-                loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword(), loginPanel.useRbTools());
+                loginPanel.getUrl(), loginPanel.getUsername(), loginPanel.getPassword(), loginPanel.useRbTools(), loginPanel.getRBToolsFilePath());
         ConfigurationPersistance.getInstance(project).loadState(configuration);
         ReviewDataProvider.reset();
     }
@@ -111,6 +141,44 @@ public class SettingsPage implements Configurable {
     @Override
     public void disposeUIResources() {
 
+    }
+    
+    private void showRBToolsFileChooser() {
+        JFileChooser chooser = new JFileChooser();
+        FileFilter filter = new FileFilter() {
+
+            @Override
+            public boolean accept(File f) {
+                // This will display only the files without "." or with ".cmd"
+                return !f.getName().contains(".") || f.getName().endsWith(".cmd");
+            }
+
+            @Override
+            public String getDescription() {
+                return "RBTools command file";
+            }
+        };
+        chooser.setDialogTitle("Select path to RBTools");
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setFileFilter(filter);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setDialogType(JFileChooser.CUSTOM_DIALOG);
+        if(loginPanel.getRBToolsFilePath() != null && loginPanel.getRBToolsFilePath().length() > 0) {
+            chooser.setSelectedFile(new File(loginPanel.getRBToolsFilePath()));
+        }
+        chooser.addPropertyChangeListener(new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (JFileChooser.SELECTED_FILE_CHANGED_PROPERTY
+                        .equals(evt.getPropertyName())) {
+                    JFileChooser chooser = (JFileChooser)evt.getSource();
+                    File curFile = chooser.getSelectedFile();
+                    loginPanel.setRBToolsFilePath(curFile.getAbsolutePath());
+                }
+            }
+        }) ;
+        
+        chooser.showDialog(loginPanel.getPanel(), "Select");
     }
 
     private void testConnection() {
