@@ -17,7 +17,7 @@
 <idea-plugin version="2">
     <id>com.ritesh.intellij.plugin.reviewboard</id>
     <name>Review board</name>
-    <version>v0.1.2</version>
+    <version>0.1.3</version>
     <vendor email="riteshkapoor.opensource@gmail.com" logo="/reviewBoardLogo.png"
             url="https://github.com/ritesh-kapoor/review-board-idea-plugin">
         Ritesh Kapoor
@@ -51,6 +51,13 @@
 
     <change-notes><![CDATA[
        <p>Change Notes</p>
+        <p>Version 0.1.3
+            <ul>
+                <li>Bug fixes</li>
+                <li>Allowing explict path for RBtools</li>
+                <li>Support to mark comments as issues</li>
+            </ul>
+        </p>
          <p>Version 0.1.2
             <ul>
                 <li>Bug fixes</li>
