@@ -113,13 +113,14 @@ public class CommentsDiffTool extends FrameDiffTool {
 
         commentsListViewPanel.setListener(new CommentsListViewPanel.CommentListener<Comment>() {
             @Override
-            public void onAdd(String value) {
+            public void onAdd(String value, boolean issueOpened) {
                 popup.dispose();
                 Comment newComment = new Comment();
                 newComment.text = value;
                 newComment.firstLine = lineNumber;
                 newComment.numberOfLines = 1;
                 newComment.file = file;
+                newComment.issueOpened = issueOpened;
                 CommentsDiffTool.this.comments.add(newComment);
                 updateHighLights(editor);
                 actionListener.actionPerformed(new ActionEvent(this, 0, null));

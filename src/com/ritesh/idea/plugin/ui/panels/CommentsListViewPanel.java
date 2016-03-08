@@ -35,6 +35,7 @@ public class CommentsListViewPanel<T> extends JPanel {
     private final JBList commentList = new JBList();
     private final EditorTextField commentEditor = new EditorTextField();
     private final ListCellRenderer listCellRenderer;
+    private final JCheckBox openIssue = new JCheckBox("Open issue");
 
     private CommentListener listener;
 
@@ -60,7 +61,12 @@ public class CommentsListViewPanel<T> extends JPanel {
         Splitter splitter = new Splitter(true);
         splitter.setProportion(0.7f);
         splitter.setFirstComponent(scrollPane);
-        splitter.setSecondComponent(commentEditor);
+
+        JPanel newCommentPanel = new JPanel();
+        newCommentPanel.setLayout(new BoxLayout(newCommentPanel, BoxLayout.PAGE_AXIS));
+        newCommentPanel.add(openIssue);
+        newCommentPanel.add(commentEditor);
+        splitter.setSecondComponent(newCommentPanel);
 
         commentEditor.setOneLineMode(false);
         commentList.setBackground(new JBColor(new Color(0, 0, 0, 0), new Color(0, 0, 0, 0)));
@@ -78,7 +84,7 @@ public class CommentsListViewPanel<T> extends JPanel {
         commentEditor.getActionMap().put("postComment", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CommentsListViewPanel.this.listener.onAdd(commentEditor.getText());
+                CommentsListViewPanel.this.listener.onAdd(commentEditor.getText(), openIssue.isSelected());
             }
         });
 
@@ -88,7 +94,7 @@ public class CommentsListViewPanel<T> extends JPanel {
     }
 
     public interface CommentListener<T> extends EventListener {
-        void onAdd(String value);
+        void onAdd(String value, boolean issueOpened);
 
         void onDelete(T value);
     }

@@ -175,7 +175,7 @@ public class ReviewDataProvider {
         for (final Review.File.Comment comment : comments) {
             progress.progress("Updating comment", progressF.floatValue());
             client.createDiffComment(reviewRequest.id, String.valueOf(review.review.id),
-                    comment.file.fileId, comment.firstLine, comment.numberOfLines, comment.text);
+                    comment.file.fileId, comment.firstLine, comment.numberOfLines, comment.text, comment.issueOpened);
             progressF.setValue(progressF.floatValue() + 1.0f / (comments.size() - 1));
         }
 

@@ -140,12 +140,13 @@ public class ReviewBoardClient {
     }
 
     public void createDiffComment(String reviewRequestId, String reviewId, String filediff_id,
-                                  int first_line, int num_lines, String text) throws URISyntaxException, IOException {
+                                  int first_line, int num_lines, String text, boolean issue_opened) throws URISyntaxException, IOException {
         RBModel result = HttpRequestBuilder.post(url).route(API).route(REVIEW_REQUESTS)
                 .route(reviewRequestId).route(REVIEWS).route(reviewId).route(DIFF_COMMENTS).slash()
                 .field("filediff_id", filediff_id)
                 .field("first_line", first_line)
                 .field("num_lines", num_lines)
+                .field("issue_opened", issue_opened)
                 .field("text", text)
                 .header(AUTHORIZATION, getAuthorizationHeader())
                 .asJson(RBModel.class);
