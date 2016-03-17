@@ -31,8 +31,8 @@ Download this plugin from your IDE (Reviewboard Plugin)
 Project Setup
 -------------
 Required Plugins:
-* Git4Idea
-* Subversion
+* Git Integration
+* Subversion Integration
 
 JDK: 1.7
 
@@ -45,6 +45,7 @@ Currently we're developing against version 15
 * Click on plus icon at top of second pane -> IntelliJ IDEA Plugin SDK
 * Browse to home of IntelliJ IDEA 15
 * It should be named 'IDEA-IU-XXXX'
-* Open Module Settings 
-* In depedencies add git4idea and svn4idea from lib directory and set scope as "provided"
+* Open Libraries and create libraries for git4idea and svn4idea
+    * These will be found in \<IDEA dir\>/plugins/(git4idea|svn4idea)/lib/
+    * You can add them to the module on creation
 * Click ok
