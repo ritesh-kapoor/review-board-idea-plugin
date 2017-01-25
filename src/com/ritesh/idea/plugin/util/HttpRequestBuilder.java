@@ -147,7 +147,7 @@ public class HttpRequestBuilder {
     public <T> T asJson(Class<T> clazz) throws IOException, URISyntaxException {
         try (CloseableHttpClient client = HttpClientBuilder.create()
                 .setDefaultRequestConfig(requestConfig)
-                .setSSLContext(CertificateManager.getInstance().getSslContext())
+                .setSslcontext(CertificateManager.getInstance().getSslContext())
                 .build()) {
             HttpRequestBase request = getHttpRequest();
             CloseableHttpResponse response = client.execute(request);
@@ -164,7 +164,7 @@ public class HttpRequestBuilder {
 
     public String asString() throws IOException, URISyntaxException {
         try (CloseableHttpClient client = HttpClientBuilder.create()
-                .setSSLContext(CertificateManager.getInstance().getSslContext())
+                .setSslcontext(CertificateManager.getInstance().getSslContext())
                 .setDefaultRequestConfig(requestConfig)
                 .build()) {
             HttpRequestBase request = getHttpRequest();
