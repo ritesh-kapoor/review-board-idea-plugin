@@ -18,6 +18,7 @@ package com.ritesh.idea.plugin.util;
 
 import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.ritesh.idea.plugin.exception.UnexpectedResponseException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
@@ -144,7 +145,10 @@ public class HttpRequestBuilder {
 
 
     public <T> T asJson(Class<T> clazz) throws IOException, URISyntaxException {
-        try (CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build()) {
+        try (CloseableHttpClient client = HttpClientBuilder.create()
+                .setDefaultRequestConfig(requestConfig)
+                .setSslcontext(CertificateManager.getInstance().getSslContext())
+                .build()) {
             HttpRequestBase request = getHttpRequest();
             CloseableHttpResponse response = client.execute(request);
             String content = CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));
@@ -159,7 +163,10 @@ public class HttpRequestBuilder {
 
 
     public String asString() throws IOException, URISyntaxException {
-        try (CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build()) {
+        try (CloseableHttpClient client = HttpClientBuilder.create()
+                .setSslcontext(CertificateManager.getInstance().getSslContext())
+                .setDefaultRequestConfig(requestConfig)
+                .build()) {
             HttpRequestBase request = getHttpRequest();
             CloseableHttpResponse response = client.execute(request);
             return CharStreams.toString(new InputStreamReader(response.getEntity().getContent()));

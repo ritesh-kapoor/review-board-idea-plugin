@@ -18,6 +18,7 @@ package com.ritesh.idea.plugin.reviewboard;
 
 import com.google.common.io.CharStreams;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.net.ssl.CertificateManager;
 import com.ritesh.idea.plugin.exception.InvalidCredentialException;
 import com.ritesh.idea.plugin.exception.ReviewBoardServerException;
 import com.ritesh.idea.plugin.reviewboard.model.*;
@@ -171,7 +172,7 @@ public class ReviewBoardClient {
             HttpRequestBase request = HttpRequestBuilder.get(href)
                     .header(AUTHORIZATION, getAuthorizationHeader())
                     .request();
-            try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
+            try (CloseableHttpClient client = HttpClientBuilder.create().setSslcontext(CertificateManager.getInstance().getSslContext()).build()) {
                 CloseableHttpResponse response = client.execute(request);
 
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
