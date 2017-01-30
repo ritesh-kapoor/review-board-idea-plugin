@@ -32,7 +32,7 @@ public class ReviewBoardToolsWindow implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         ReviewsPanel panel = new ReviewsPanel(project);
-        Content content = toolWindow.getContentManager().getFactory().createContent(panel, "Review Board", false);
+        Content content = toolWindow.getContentManager().getFactory().createContent(panel, null, false);
         toolWindow.getContentManager().addContent(content);
     }
 }
