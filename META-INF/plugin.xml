@@ -83,7 +83,7 @@
     </change-notes>
 
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
-    <idea-version since-build="131"/>
+    <idea-version since-build="181.2218"/>
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
     <depends>Subversion</depends>

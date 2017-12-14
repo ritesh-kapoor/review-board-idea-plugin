@@ -27,14 +27,13 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.Command;
 import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.jetbrains.idea.svn.history.LogEntry;
 import org.jetbrains.idea.svn.history.LogEntryConsumer;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -75,13 +74,13 @@ public class SvnDiffProvider extends BaseSvnClient implements IVcsDiffProvider {
     private String fromRevisions(Project project, VirtualFile root, long beforeRevisionNumber,
                                  long afterRevisionNumber) throws VcsException {
         SvnVcs svnVcs = SvnVcs.getInstance(project);
-        SvnTarget svnTarget = SvnTarget.fromFile(new File(root.getPath()));
+        Target svnTarget = Target.on(new File(root.getPath()));
 
         final long[] lastRevisionNumber = new long[1];
-        svnVcs.getFactory().createHistoryClient().doLog(svnTarget, SVNRevision.create(beforeRevisionNumber)
-                , SVNRevision.create(0), false, true, false, 2, null, new LogEntryConsumer() {
+        svnVcs.getFactory().createHistoryClient().doLog(svnTarget, Revision.of(beforeRevisionNumber)
+                , Revision.of(0), false, true, false, 2, null, new LogEntryConsumer() {
             @Override
-            public void consume(LogEntry logEntry) throws SVNException {
+            public void consume(LogEntry logEntry) {
                 lastRevisionNumber[0] = logEntry.getRevision();
             }
         });
@@ -102,7 +101,7 @@ public class SvnDiffProvider extends BaseSvnClient implements IVcsDiffProvider {
         //TODO: publish only selected changes attribute (need to handle deleted files)
         SvnVcs svnVcs = SvnVcs.getInstance(project);
 
-        SvnTarget svnTarget = SvnTarget.fromFile(new File(root.getPath()));
+        Target svnTarget = Target.on(new File(root.getPath()));
         List<String> parameters = new ArrayList<>();
         /*for (Change change : changes) {
             if (change.getVirtualFile() != null) {
