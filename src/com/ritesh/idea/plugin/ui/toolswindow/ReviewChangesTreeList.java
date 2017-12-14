@@ -43,7 +43,7 @@ public class ReviewChangesTreeList extends ChangesTreeList<Change> {
     }
 
     @Override
-    protected List<Change> getSelectedObjects(ChangesBrowserNode<Change> node) {
+    protected List<Change> getSelectedObjects(ChangesBrowserNode<?> node) {
         return node.getAllChangesUnder();
     }
 
