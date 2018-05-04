@@ -16,18 +16,26 @@
 
 package com.ritesh.idea.plugin.reviewboard;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.ritesh.idea.plugin.exception.InvalidConfigurationException;
-import com.ritesh.idea.plugin.reviewboard.model.*;
+import com.ritesh.idea.plugin.reviewboard.model.RBComments;
+import com.ritesh.idea.plugin.reviewboard.model.RBCreateReview;
+import com.ritesh.idea.plugin.reviewboard.model.RBDiffList;
+import com.ritesh.idea.plugin.reviewboard.model.RBFileDiff;
+import com.ritesh.idea.plugin.reviewboard.model.RBGroupList;
+import com.ritesh.idea.plugin.reviewboard.model.RBRepository;
+import com.ritesh.idea.plugin.reviewboard.model.RBReview;
+import com.ritesh.idea.plugin.reviewboard.model.RBReviewRequestList;
+import com.ritesh.idea.plugin.reviewboard.model.RBUserList;
 import com.ritesh.idea.plugin.state.Configuration;
 import com.ritesh.idea.plugin.state.ConfigurationPersistance;
 import com.ritesh.idea.plugin.state.DefaultState;
 import com.ritesh.idea.plugin.state.DefaultStatePersistance;
 import com.ritesh.idea.plugin.util.Page;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.mutable.MutableFloat;
-
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -39,6 +47,8 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.mutable.MutableFloat;
 
 /**
  * @author Ritesh
@@ -46,6 +56,8 @@ import java.util.concurrent.Future;
 public class ReviewDataProvider {
     private ReviewBoardClient client;
     private static Map<Project, ReviewDataProvider> reviewDataProviderMap = new WeakHashMap<>();
+    public static final String REVIEWBOARD_PASSWORD = "somekeyforstoring..ex:projectname";
+
 
     public static ReviewDataProvider getInstance(Project project) {
         Configuration configuration = getConfiguration(project);
@@ -67,6 +79,7 @@ public class ReviewDataProvider {
         if (state == null || StringUtils.isEmpty(state.url) || StringUtils.isEmpty(state.username) || StringUtils.isEmpty(state.password)) {
             throw new InvalidConfigurationException("Review board not configured properly");
         }
+        state.password = getPassword(state.username);
         return state;
     }
 
@@ -124,7 +137,25 @@ public class ReviewDataProvider {
         DefaultStatePersistance.getInstance(project).loadState(defaultState);
     }
 
-    public void testConnection(String url, String username, String password) throws Exception {
+    public static void saveConfigurationState(Project project, Configuration configuration) {
+        savePassword(configuration.username, configuration.password);
+        ConfigurationPersistance.getInstance(project).loadState(configuration);
+    }
+
+    private static void savePassword(String username, String password) {
+        Credentials saveCredentials = new Credentials(username, password);
+        PasswordSafe.getInstance().set(new CredentialAttributes(REVIEWBOARD_PASSWORD, username,
+                ReviewDataProvider.class, false), saveCredentials);
+    }
+
+    private static String getPassword(String username) {
+        CredentialAttributes attributes = new CredentialAttributes(REVIEWBOARD_PASSWORD, username,
+                ReviewDataProvider.class, false);
+        return PasswordSafe.getInstance().getPassword(attributes);
+    }
+
+    public static void testConnection(String url, String username, String password) throws Exception {
+        ReviewBoardClient client = new ReviewBoardClient(url, username, password);
         client.testConnection(url, username, password);
     }
 

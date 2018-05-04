@@ -75,11 +75,11 @@ public class ReviewBoardClient {
     private <T extends RBModel> T checkSuccess(T model) {
         if (!model.stat.equalsIgnoreCase("ok")) {
             //TODO : more error information in message
+            if (model.err.code.equals(ERRORCODE_LOGINFAILED)) {
+                throw new InvalidCredentialException(model.err.msg);
+            }
             String error = String.format("Server : %s, reason : %s, fields : %s,file : %s , revision : %s",
                     model.err.msg, model.reason, model.fields, model.file, model.revision);
-            if (model.err.code.equals(ERRORCODE_LOGINFAILED)) {
-                throw new InvalidCredentialException(error);
-            }
             throw new ReviewBoardServerException(error);
         }
         return model;
