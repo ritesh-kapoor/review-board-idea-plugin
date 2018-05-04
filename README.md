@@ -22,7 +22,7 @@ Limitations
 
 Plugin Compatibility
 -------------
-This plugin was built with JDK 1.7 and idea 15 version.
+This plugin was built with JDK 1.8 and idea 2018.1 version.
 
 How to install it?
 -------------
@@ -34,18 +34,23 @@ Required Plugins:
 * Git Integration
 * Subversion Integration
 
-JDK: 1.7
+JDK: 1.8
 
 You'll need to setup the appropriate SDK. IntelliJ SDK and plugin dependencies are required to be setup.
 
-Currently we're developing against version 15
+Currently we're developing against version 18
 
 * Go to File -> Project Structure
 * Click on SDKs
 * Click on plus icon at top of second pane -> IntelliJ IDEA Plugin SDK
-* Browse to home of IntelliJ IDEA 15
+* Browse to home of IntelliJ IDEA 18
 * It should be named 'IDEA-IU-XXXX'
-* Open Libraries and create libraries for git4idea and svn4idea
-    * These will be found in \<IDEA dir\>/plugins/(git4idea|svn4idea)/lib/
-    * You can add them to the module on creation
 * Click ok
+
+How To Test
+----------
+* Install docker
+* run "docker-compose -f docker-compose.yml up" to start review board in docker
+* Use username: admin and password: admin
+* Add any Git/Svn repository
+* Use http://localhost:8000 as url

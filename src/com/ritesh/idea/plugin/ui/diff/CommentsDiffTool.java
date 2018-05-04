@@ -38,15 +38,16 @@ import com.ritesh.idea.plugin.reviewboard.Review;
 import com.ritesh.idea.plugin.reviewboard.Review.File.Comment;
 import com.ritesh.idea.plugin.ui.panels.CommentPanel;
 import com.ritesh.idea.plugin.ui.panels.CommentsListViewPanel;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 /**
  * @author Ritesh
@@ -82,13 +83,14 @@ public class CommentsDiffTool extends FrameDiffTool {
                 if (e.getArea() != null && e.getArea().equals(EditorMouseEventArea.LINE_MARKERS_AREA)) {
                     final Point locationOnScreen = e.getMouseEvent().getLocationOnScreen();
                     final int lineNumber = EditorUtil.yPositionToLogicalLine(editor, e.getMouseEvent()) + 1;
-                    showCommentsView(locationOnScreen, lineNumber, editor);
+                    showCommentsView(locationOnScreen, lineNumber, editor, e);
                 }
             }
         });
 
         DiffUtil.initDiffFrame(request.getProject(), frameWrapper, diffPanel, diffPanel.getComponent());
         frameWrapper.setTitle(request.getWindowTitle());
+        frameWrapper.setPreferredFocusedComponent(diffPanel.getComponent());
         frameWrapper.show();
     }
 
@@ -96,7 +98,8 @@ public class CommentsDiffTool extends FrameDiffTool {
         this.actionListener = actionListener;
     }
 
-    private void showCommentsView(Point locationOnScreen, final int lineNumber, final Editor editor) {
+    private void showCommentsView(Point locationOnScreen, final int lineNumber, final Editor editor,
+            EditorMouseEvent mouseEvent) {
         List<Comment> comments = lineComments(CommentsDiffTool.this.comments).get(lineNumber);
 
         final CommentsListViewPanel<Comment> commentsListViewPanel = new CommentsListViewPanel(comments, listCellRenderer);
@@ -108,7 +111,7 @@ public class CommentsDiffTool extends FrameDiffTool {
                 .setAdText("Hit Ctrl+Enter to add comment & double click comment to delete.")
                 .setResizable(true)
                 .createPopup();
-        popup.show(RelativePoint.fromScreen(locationOnScreen));
+        popup.show(new RelativePoint(mouseEvent.getMouseEvent()));
 
 
         commentsListViewPanel.setListener(new CommentsListViewPanel.CommentListener<Comment>() {

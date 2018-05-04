@@ -1,0 +1,23 @@
+version: '2'
+services:
+    postgres:
+        image: postgres:alpine
+        environment:
+            - POSTGRES_USER=reviewboard
+    memcached:
+        image: memcached:alpine
+    reviewboard:
+        image: ikatson/reviewboard
+        volumes:
+            - /Users/ritkapoor/Desktop/docker-data/reviewboard/.ssh:/root/.ssh
+            - /Users/ritkapoor/Desktop/docker-data/reviewboard/media:/media
+            - /Users/ritkapoor/Desktop/docker-data/reviewboard/projects:/projects
+        depends_on:
+            - postgres
+            - memcached
+        environment:
+            - PGHOST=postgres
+            - MEMCACHED=memcached:11211
+            - WAIT_FOR_POSTGRES=true
+        ports:
+            - 8000:8000

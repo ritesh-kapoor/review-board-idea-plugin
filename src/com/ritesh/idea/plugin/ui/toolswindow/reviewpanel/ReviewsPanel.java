@@ -16,9 +16,18 @@
 
 package com.ritesh.idea.plugin.ui.toolswindow.reviewpanel;
 
+import static com.intellij.openapi.util.text.StringUtil.join;
+
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffRequest;
@@ -45,17 +54,16 @@ import com.ritesh.idea.plugin.ui.panels.DraftReviewPanel;
 import com.ritesh.idea.plugin.ui.toolswindow.ReviewChangesTreeList;
 import com.ritesh.idea.plugin.ui.toolswindow.ReviewTableModel;
 import com.ritesh.idea.plugin.ui.toolswindow.reviewpanel.ReviewPanelController.ReviewListFilter;
-
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.openapi.util.text.StringUtil.join;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * @author Ritesh
@@ -139,6 +147,7 @@ public class ReviewsPanel extends JPanel {
                 repositoryComboBox.removeAllItems();
                 repositoryComboBox.addItem("Select Repository");
                 repositoryComboBox.setSelectedIndex(0);
+                Collections.sort(repositories);
                 for (String repository : repositories) {
                     repositoryComboBox.addItem(repository);
                 }

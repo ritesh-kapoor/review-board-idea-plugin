@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Future;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableFloat;
 
@@ -238,7 +239,7 @@ public class ReviewDataProvider {
 
         if (diffList.total_results > 0) {
             final String revision = String.valueOf(diffList.diffs[0].revision);
-            RBFileDiff fileDiff = client.fileDiffApi(review.id, revision);
+            final RBFileDiff fileDiff = client.fileDiffApi(review.id, revision);
 
             for (final RBFileDiff.File file : fileDiff.files) {
                 final Review.File diffFile = new Review.File();
@@ -254,7 +255,7 @@ public class ReviewDataProvider {
                             @Override
                             public void run() {
                                 progress.progress("Loading file contents "
-                                        + Paths.get(diffFile.srcFileName).getFileName(), progressF.floatValue());
+                                        + FilenameUtils.getName(diffFile.srcFileName), progressF.floatValue());
                                 diffFile.srcFileContents = client.contents(file.links.original_file.href);
                                 progressF.setValue(progressF.floatValue() + 1.0f / diffList.total_results);
                                 progress.progress("Completed loading contents", progressF.floatValue());
@@ -267,7 +268,7 @@ public class ReviewDataProvider {
                             @Override
                             public void run() {
                                 progress.progress("Loading file contents "
-                                        + Paths.get(diffFile.dstFileName).getFileName(), progressF.floatValue());
+                                        + FilenameUtils.getName(diffFile.dstFileName), progressF.floatValue());
                                 diffFile.dstFileContents = client.contents(file.links.patched_file.href);
                                 progressF.setValue(progressF.floatValue() + 1.0f / diffList.total_results);
                                 progress.progress("Completed loading contents", progressF.floatValue());
