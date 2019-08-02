@@ -188,7 +188,7 @@ public class ReviewsPanel extends JPanel {
         final Change selectedChange = changesTree.getSelectedChanges().get(0);
         List<Review.File> selectedFiles = controller.selectedFiles();
         for (Review.File file : selectedFiles) {
-            if (file.srcFileName.equals(selectedChange.getBeforeRevision().getFile().getPath())) {
+            if (file.srcFileName.equals(selectedChange.getBeforeRevision().getFile().getPath()) || file.srcFileName.equals('/'+selectedChange.getBeforeRevision().getFile().getPath())) {
                 controller.loadComments(file);
                 break;
             }
